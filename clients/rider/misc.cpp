@@ -5,7 +5,7 @@
 
 #define __HIPCC__
 
-#include <hip_runtime.h>
+#include <hip/hip_runtime.h>
 #include "rocfft.h"
 #include "./misc.h"
 
@@ -25,7 +25,7 @@ void setupBuffers( std::vector< int > devices,
 
 }
 
-void clearBuffers(   
+void clearBuffers(
 			void *buffersIn[],
                 	void *buffersOut[] )
 {
@@ -43,5 +43,3 @@ void clearBuffers(
 	}
 
 }
-
-
