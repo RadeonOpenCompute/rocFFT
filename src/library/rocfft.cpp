@@ -9,7 +9,7 @@
 #include "helper_math.h"
 #endif
 
-#include <hip_runtime.h>
+#include <hip/hip_runtime.h>
 #include "rocfft.h"
 #include "./plan.h"
 
@@ -25,16 +25,3 @@ rocfft_status rocfft_cleanup()
 {
 	return rocfft_status_success;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
