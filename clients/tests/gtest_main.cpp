@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 // #include <boost/program_options.hpp>
 
-#include "hip_runtime.h"
+#include <hip/hip_runtime.h>
 #include "rocfft.h"
 
 // namespace po = boost::program_options;
