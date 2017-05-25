@@ -84,7 +84,9 @@ def rocfft_build_pipeline( String build_type, String clang_version, String boost
       stage("Package Debian")
       {
         sh 'cd library-build; make package'
-        archive includes: 'library-build/*.deb'
+        archiveArtifacts artifacts: 'library-build/*.deb', fingerprint: true
+        archiveArtifacts artifacts: 'library-build/*.rpm', fingerprint: true
+        sh "sudo dpkg -c library-build/*.deb"
       }
 
       run_tests( )
