@@ -7,7 +7,9 @@ properties([buildDiscarder(logRotator(
     artifactNumToKeepStr: '',
     daysToKeepStr: '',
     numToKeepStr: '10')),
-disableConcurrentBuilds()])
+    disableConcurrentBuilds(),
+    [$class: 'CopyArtifactPermissionProperty', projectNames: '*']
+  ])
 
 def email_list = "kent.knox@amd.com, bragadeesh.natarajan@amd.com, tingxing.dong@amd.com"
 // def email_list = emailextrecipients([ [$class: 'CulpritsRecipientProvider'] ])
@@ -87,7 +89,6 @@ def rocfft_build_pipeline( String build_type, String clang_version, String boost
 
       run_tests( )
     }
-    currentBuild.result = 'SUCCESS'
   }
   catch( err )
   {
@@ -102,13 +103,13 @@ def rocfft_build_pipeline( String build_type, String clang_version, String boost
   return void
 }
 
-node('rocm-artifactory && fiji')
+node('rocm-1.5 && gfx803')
 {
   rocfft_build_pipeline( "Release", "3.8", "/opt/boost/clang-3.8" )
 }
 
 ////////////////////////////////////////////////////////////////////////
-node('rocm-1.4 && fiji')
-{
-  rocfft_build_pipeline( "Release", "3.5", "/opt/boost" )
-}
+// node('rocm-1.4 && gfx803')
+// {
+//   rocfft_build_pipeline( "Release", "3.5", "/opt/boost" )
+// }
