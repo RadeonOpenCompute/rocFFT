@@ -16,6 +16,7 @@
 #include "kernel_launch.h"
 #include "function_pool.h"
 #include "ref_cpu.h"
+#include <atomic>
 
 #ifdef TMP_DEBUG
 #include "rocfft_hip.h"
@@ -115,6 +116,7 @@ void PlanPowX(ExecPlan &execPlan)
                 else
                 {
                     std::cout << "should not be in this else block" << std::endl;
+                    std::cout << "scheme: " << execPlan.execSeq[i]->scheme << std::endl;
                 }
 
         if(ptr == nullptr)
@@ -187,6 +189,7 @@ void PlanPowX(ExecPlan &execPlan)
                 else
                 {
                     std::cout << "should not be in this else block" << std::endl;
+                    std::cout << "scheme: " << execPlan.execSeq[i]->scheme << std::endl;
                 }
 
         if(ptr == nullptr)
