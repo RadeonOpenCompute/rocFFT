@@ -50,13 +50,26 @@ public:
     static DevFnCall get_function_single(Key mykey)
     {
         function_pool &func_pool = get_function_pool();
-        return func_pool.function_map_single.at(mykey);//return an reference to the value of the key, if not found throw an exception
+        DevFnCall ptr = func_pool.function_map_single.at(mykey);//return an reference to the value of the key, if not found throw an exception
+        if(ptr == nullptr)
+        {
+            std::cout << "reading null ptr from sinlge table" << std::endl;
+            std::cout << mykey.first << ", " << mykey.second << std::endl;
+        }
+        return ptr;
+        //return func_pool.function_map_single.at(mykey);//return an reference to the value of the key, if not found throw an exception
     }
 
     static DevFnCall get_function_double(Key mykey)
     {
         function_pool &func_pool = get_function_pool();
-        return func_pool.function_map_double.at(mykey);
+        DevFnCall ptr = func_pool.function_map_double.at(mykey);
+        if(ptr == nullptr)
+        {
+            std::cout << "reading null ptr from double table" << std::endl;
+            std::cout << mykey.first << ", " << mykey.second << std::endl;
+        }
+        return ptr;
     }
 
     static void verify_no_null_functions()

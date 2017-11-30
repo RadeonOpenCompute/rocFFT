@@ -21,6 +21,7 @@
 #include "rocfft_hip.h"
 #endif
 
+std::atomic<bool> fn_checked(false);
 
 /* this function is called during creation of plan : enqueue the HIP kernels by function pointers*/
 void PlanPowX(ExecPlan &execPlan)
@@ -48,6 +49,11 @@ void PlanPowX(ExecPlan &execPlan)
                                                         execPlan.execSeq[i]->iDist, execPlan.execSeq[i]->oDist);
     }
 
+    if(!fn_checked)
+    {
+        function_pool::verify_no_null_functions();
+        fn_checked = true;
+    }
 
     if(execPlan.execSeq[0]->precision == rocfft_precision_single)
     {
@@ -106,6 +112,15 @@ void PlanPowX(ExecPlan &execPlan)
                     gp.tpb_y = 16;
                     
                 }
+                else
+                {
+                    std::cout << "should not be in this else block" << std::endl;
+                }
+
+        if(ptr == nullptr)
+        {
+            std::cout << "ptr not getting initialized" << std::endl;
+        }
 
                 execPlan.devFnCall.push_back(ptr);
                 execPlan.gridParam.push_back(gp);
@@ -169,6 +184,16 @@ void PlanPowX(ExecPlan &execPlan)
                     gp.tpb_y = 16;
                     
                 }
+                else
+                {
+                    std::cout << "should not be in this else block" << std::endl;
+                }
+
+        if(ptr == nullptr)
+        {
+            std::cout << "ptr not getting initialized" << std::endl;
+        }
+
 
                 execPlan.devFnCall.push_back(ptr);
                 execPlan.gridParam.push_back(gp);
