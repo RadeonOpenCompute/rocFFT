@@ -344,6 +344,7 @@ class RefLibOp
             local_fftwf_complex *tmp_mem = (local_fftwf_complex *)malloc(in_size_bytes);
             hipMemcpy(tmp_mem, data->bufIn[0], in_size_bytes, hipMemcpyDeviceToHost);
 
+            printf("iDist=%d,oDist=%d, in complex2hermitian kernel\n", data->node->iDist, data->node->oDist);
                 for(size_t b=0; b<data->node->batch; b++)
                 {
                     for(size_t i=0; i<data->node->length[0]/2 + 1; i++)//TODO: only work for 1D cases
@@ -386,6 +387,12 @@ public:
         local_fftwf_complex *tmp_mem = (local_fftwf_complex *)malloc(out_size_bytes);
         hipMemcpy(tmp_mem, data->bufOut[0], out_size_bytes, hipMemcpyDeviceToHost);
 
+        if(data->node->scheme == CS_KERNEL_COPY_CMPLX_TO_HERM)
+        {
+            hipMemcpy(lb, tmp_mem, out_size_bytes, hipMemcpyHostToHost);//hermitan only works for batch=1, dense packed cases
+
+            return;//TODO
+        }
         if(data->node->scheme == CS_KERNEL_TRANSPOSE)
         {
             std::vector<size_t> length_transpose_output;
