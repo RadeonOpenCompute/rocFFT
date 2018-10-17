@@ -114,7 +114,7 @@ rocm_install_targets(
 rocm_export_targets(
   TARGETS roc::rocfft
   PREFIX rocfft
-  DEPENDS PACKAGE hip
+  DEPENDS PACKAGE HIP
   NAMESPACE roc::
  )
 
