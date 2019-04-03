@@ -367,8 +367,8 @@ rocfft_status rocfft_plan_create(       rocfft_plan *plan,
                                         const rocfft_plan_description description )
 {
     rocfft_plan_allocate(plan);
-    
-    size_t log_len[3] = {0,0,0};
+
+    size_t log_len[3] = {1,1,1};
     if (dimensions > 0)
         log_len[0] = lengths[0];
     if (dimensions > 1)
@@ -380,6 +380,30 @@ rocfft_status rocfft_plan_create(       rocfft_plan *plan,
               "transform_type", transform_type, "precision", precision,
               "dimensions", dimensions, "lengths", log_len[0], log_len[1], log_len[2],
               "number_of_transforms",number_of_transforms,"description", description);
+
+    if (placement == rocfft_placement_inplace )
+        log_bench("./rocfft-rider",
+            "-t", transform_type,
+            "-x", log_len[0], "-y", log_len[1], "-z", log_len[2],
+            "--isX", description->inStrides[0], "--isY", description->inStrides[1], "--isZ", description->inStrides[2],
+            "--osX", description->outStrides[0], "--osY", description->outStrides[1], "--osZ", description->outStrides[2],
+            "--scale", description->scale, "--iff0", description->inOffset[0], "--iff1", description->inOffset[1],
+            "--off0", description->outOffset[0], "--off1", description->outOffset[1],
+            "-b", number_of_transforms,
+            "--inArrayType", description->inArrayType, "--outArrayType", description->outArrayType
+            );
+    else
+        log_bench("./rocfft-rider",
+            "-o",
+            "-t", transform_type,
+            "-x", log_len[0], "-y", log_len[1], "-z", log_len[2],
+            "--isX", description->inStrides[0], "--isY", description->inStrides[1], "--isZ", description->inStrides[2],
+            "--osX", description->outStrides[0], "--osY", description->outStrides[1], "--osZ", description->outStrides[2],
+            "--scale", description->scale, "--iff0", description->inOffset[0], "--iff1", description->inOffset[1],
+            "--off0", description->outOffset[0], "--off1", description->outOffset[1],
+            "-b", number_of_transforms,
+            "--inArrayType", description->inArrayType, "--outArrayType", description->outArrayType
+            );
 
     return rocfft_plan_create_internal(*plan, placement, transform_type, precision, dimensions, lengths, number_of_transforms, description);
 }
