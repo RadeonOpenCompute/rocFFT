@@ -5,7 +5,7 @@
 #include <vector>
 #include <assert.h>
 #include <iostream>
-
+#include <sstream>
 #include "rocfft.h"
 #include "private.h"
 #include "plan.h"
@@ -46,7 +46,7 @@ rocfft_status rocfft_plan_description_set_data_layout(       rocfft_plan_descrip
               "out_array_type", out_array_type, "in_offsets", in_offsets, "out_offsets", out_offsets,
               "in_strides_size", in_strides_size, "in_strides", in_strides, "in_distance", in_distance,
               "out_strides_size", out_strides_size, "out_strides", out_strides, "out_distance", out_distance);
-    
+
     description->inArrayType = in_array_type;
     description->outArrayType = out_array_type;
 
@@ -99,7 +99,7 @@ rocfft_status rocfft_plan_description_create( rocfft_plan_description *descripti
 rocfft_status rocfft_plan_description_destroy( rocfft_plan_description description )
 {
     log_trace(__func__, "description", description);
-    
+
     if(description != nullptr)
         delete description;
 
@@ -238,10 +238,10 @@ rocfft_status rocfft_plan_create_internal(       rocfft_plan plan,
         {
         case rocfft_transform_type_complex_forward:
         case rocfft_transform_type_complex_inverse:
-        
+
             p->desc.inArrayType  = rocfft_array_type_complex_interleaved;
             p->desc.outArrayType = rocfft_array_type_complex_interleaved;
-        
+
         break;
         case rocfft_transform_type_real_forward:
         {
@@ -265,7 +265,7 @@ rocfft_status rocfft_plan_create_internal(       rocfft_plan plan,
         if(p->transformType == rocfft_transform_type_real_inverse)
         {
             size_t dist = 1 + (p->lengths[0])/2;
-           
+
             for(size_t i=1; i<(p->rank); i++)
             {
                 p->desc.inStrides[i] = dist;
@@ -278,7 +278,7 @@ rocfft_status rocfft_plan_create_internal(       rocfft_plan plan,
         else if( (p->transformType == rocfft_transform_type_real_forward) && (p->placement == rocfft_placement_inplace) )
         {
             size_t dist = 2 * (1 + (p->lengths[0])/2);
-           
+
             for(size_t i=1; i<(p->rank); i++)
             {
                 p->desc.inStrides[i] = dist;
@@ -302,7 +302,7 @@ rocfft_status rocfft_plan_create_internal(       rocfft_plan plan,
         if(p->transformType == rocfft_transform_type_real_forward)
         {
             size_t dist = 1 + (p->lengths[0])/2;
-           
+
             for(size_t i=1; i<(p->rank); i++)
             {
                 p->desc.outStrides[i] = dist;
@@ -315,7 +315,7 @@ rocfft_status rocfft_plan_create_internal(       rocfft_plan plan,
         else if( (p->transformType == rocfft_transform_type_real_inverse) && (p->placement == rocfft_placement_inplace) )
         {
             size_t dist = 2 * (1 + (p->lengths[0])/2);
-           
+
             for(size_t i=1; i<(p->rank); i++)
             {
                 p->desc.outStrides[i] = dist;
@@ -342,7 +342,7 @@ rocfft_status rocfft_plan_create_internal(       rocfft_plan plan,
     {
         p->desc.outDist = p->lengths[p->rank - 1] * p->desc.outStrides[p->rank -1];
     }
-    
+
     /*if(!SupportedLength(prodLength))
     {
         printf("This size %zu is not supported in rocFFT, will return;\n", prodLength);
@@ -375,35 +375,28 @@ rocfft_status rocfft_plan_create(       rocfft_plan *plan,
         log_len[1] = lengths[1];
     if (dimensions > 2)
         log_len[2] = lengths[2];
-    
-    log_trace(__func__, "plan", *plan, "placment", placement, 
+
+    log_trace(__func__, "plan", *plan, "placment", placement,
               "transform_type", transform_type, "precision", precision,
               "dimensions", dimensions, "lengths", log_len[0], log_len[1], log_len[2],
               "number_of_transforms",number_of_transforms,"description", description);
 
-    if (placement == rocfft_placement_inplace )
-        log_bench("./rocfft-rider",
-            "-t", transform_type,
-            "-x", log_len[0], "-y", log_len[1], "-z", log_len[2],
-            "--isX", description->inStrides[0], "--isY", description->inStrides[1], "--isZ", description->inStrides[2],
-            "--osX", description->outStrides[0], "--osY", description->outStrides[1], "--osZ", description->outStrides[2],
-            "--scale", description->scale, "--iff0", description->inOffset[0], "--iff1", description->inOffset[1],
-            "--off0", description->outOffset[0], "--off1", description->outOffset[1],
-            "-b", number_of_transforms,
-            "--inArrayType", description->inArrayType, "--outArrayType", description->outArrayType
-            );
-    else
-        log_bench("./rocfft-rider",
-            "-o",
-            "-t", transform_type,
-            "-x", log_len[0], "-y", log_len[1], "-z", log_len[2],
-            "--isX", description->inStrides[0], "--isY", description->inStrides[1], "--isZ", description->inStrides[2],
-            "--osX", description->outStrides[0], "--osY", description->outStrides[1], "--osZ", description->outStrides[2],
-            "--scale", description->scale, "--iff0", description->inOffset[0], "--iff1", description->inOffset[1],
-            "--off0", description->outOffset[0], "--off1", description->outOffset[1],
-            "-b", number_of_transforms,
-            "--inArrayType", description->inArrayType, "--outArrayType", description->outArrayType
-            );
+    std::stringstream ss;
+    ss << "./rocfft-rider" << " -t " << transform_type  << " -x "
+       << log_len[0] << " -y " << log_len[1] << " -z " << log_len[2]
+       << " -b " << number_of_transforms;
+    if (placement == rocfft_placement_notinplace)
+        ss << " -o ";
+    if (precision == rocfft_precision_double)
+        ss << " --double ";
+    if (description != NULL)
+        ss << " --isX " << description->inStrides[0] << " --isY " << description->inStrides[1] << " --isZ " << description->inStrides[2]
+           << " --osX " << description->outStrides[0] << " --osY " << description->outStrides[1] << " --osZ " << description->outStrides[2]
+           << " --scale " << description->scale << " --iff0 " << description->inOffset[0] << " --iff1 " << description->inOffset[1]
+           << " --off0 " << description->outOffset[0] << " --off1 " << description->outOffset[1]
+           << " --inArrayType " << description->inArrayType << " --outArrayType " << description->outArrayType;
+
+    log_bench(ss.str());
 
     return rocfft_plan_create_internal(*plan, placement, transform_type, precision, dimensions, lengths, number_of_transforms, description);
 }
@@ -411,7 +404,7 @@ rocfft_status rocfft_plan_create(       rocfft_plan *plan,
 rocfft_status rocfft_plan_destroy( rocfft_plan plan )
 {
     log_trace(__func__, "plan", plan);
-        
+
     if(plan != nullptr)
         delete plan;
 
@@ -420,13 +413,13 @@ rocfft_status rocfft_plan_destroy( rocfft_plan plan )
 
 rocfft_status rocfft_plan_get_work_buffer_size( const rocfft_plan plan, size_t *size_in_bytes )
 {
-    log_trace(__func__, "plan", plan, "size_in_bytes", size_in_bytes);
     Repo &repo = Repo::GetRepo();
     ExecPlan execPlan;
     repo.GetPlan(plan, execPlan);
 
     *size_in_bytes = execPlan.workBufSize * 2 * plan->base_type_size;
-
+    
+    log_trace(__func__, "plan", plan, "size_in_bytes ptr", size_in_bytes, "val", *size_in_bytes);
     return rocfft_status_success;
 }
 
@@ -1322,7 +1315,7 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer &flipIn, Operatin
 
         childNodes[2]->obIn = OB_TEMP_CMPLX_FOR_REAL;
         childNodes[2]->obOut = OB_USER_OUT;
-       
+
         obIn = childNodes[0]->obIn;
         obOut = childNodes[2]->obOut;
     }
@@ -1347,7 +1340,7 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer &flipIn, Operatin
         {
             childNodes[1]->obIn = obIn;
         }
-        
+
         childNodes[1]->obOut = OB_TEMP_BLUESTEIN;
 
         childNodes[2]->obIn = OB_TEMP_BLUESTEIN;
@@ -1671,7 +1664,7 @@ void TreeNode::TraverseTreeAssignPlacementsLogicA(rocfft_array_type rootIn, rocf
         case OB_USER_OUT: inArrayType = rootOut; break;
         case OB_TEMP: inArrayType = rocfft_array_type_complex_interleaved; break;
         case OB_TEMP_CMPLX_FOR_REAL: inArrayType = rocfft_array_type_complex_interleaved; break;
-        case OB_TEMP_BLUESTEIN: 
+        case OB_TEMP_BLUESTEIN:
                                      inArrayType = rocfft_array_type_complex_interleaved;
                                      if(parent->iOffset != 0) iOffset = parent->iOffset;
                                      break;
@@ -1750,7 +1743,7 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
         chirpPlan->iDist = chirpPlan->lengthBlue;
         chirpPlan->outStride.push_back(1);
         chirpPlan->oDist = chirpPlan->lengthBlue;
-       
+
         padmulPlan->inStride = inStride;
         padmulPlan->iDist = iDist;
 
@@ -1791,7 +1784,7 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
         resmulPlan->inStride = fftrPlan->outStride;
         resmulPlan->iDist = fftrPlan->oDist;
         resmulPlan->outStride = outStride;
-        resmulPlan->oDist = oDist; 
+        resmulPlan->oDist = oDist;
     }
     break;
     case CS_L1D_TRTRT:
@@ -2449,7 +2442,7 @@ void TreeNode::Print(std::ostream& os,int indent) const
     for (size_t i = 0; i < outStride.size(); i++)
         os << outStride[i] << ", ";
     os << oDist;
-    
+
     os << std::endl << indentStr.c_str();
     os << "iOffset: " << iOffset;
     os << std::endl << indentStr.c_str();
