@@ -69,6 +69,7 @@ rocfft_status rocfft_plan_description_set_data_layout(       rocfft_plan_descrip
     {
         for(size_t i=0; i<MIN(3, in_strides_size); i++)
             description->inStrides[i] = in_strides[i];
+
     }
 
     if(in_distance != 0)
@@ -392,9 +393,9 @@ rocfft_status rocfft_plan_create(       rocfft_plan *plan,
     if (description != NULL)
         ss << " --isX " << description->inStrides[0] << " --isY " << description->inStrides[1] << " --isZ " << description->inStrides[2]
            << " --osX " << description->outStrides[0] << " --osY " << description->outStrides[1] << " --osZ " << description->outStrides[2]
-           << " --scale " << description->scale << " --iff0 " << description->inOffset[0] << " --iff1 " << description->inOffset[1]
-           << " --off0 " << description->outOffset[0] << " --off1 " << description->outOffset[1]
-           << " --inArrayType " << description->inArrayType << " --outArrayType " << description->outArrayType;
+           << " --scale " << description->scale << " --iOff0 " << description->inOffset[0] << " --iOff1 " << description->inOffset[1]
+           << " --oOff0 " << description->outOffset[0] << " --oOff1 " << description->outOffset[1]
+           << " --inArrType " << description->inArrayType << " --outArrType " << description->outArrayType;
 
     log_bench(ss.str());
 
