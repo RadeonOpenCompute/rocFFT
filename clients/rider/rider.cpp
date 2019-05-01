@@ -3,6 +3,7 @@
  ******************************************************************************/
 
 #include <cmath>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <sstream>

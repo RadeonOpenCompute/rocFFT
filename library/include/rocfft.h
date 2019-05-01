@@ -5,11 +5,11 @@
 /*! @file rocfft.h
  *  rocfft.h defines all the public interfaces and types
  *  */
+#include <cstdlib>
 
 #ifndef __ROCFFT_H__
 #define __ROCFFT_H__
 
-#include <cstdlib>
 #include "rocfft-export.h"
 #include "rocfft-version.h"
 
