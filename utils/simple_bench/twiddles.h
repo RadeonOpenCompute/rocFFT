@@ -8,6 +8,7 @@
 
 #include "kernel_launch.h"
 #include <cassert>
+#include <cstdlib>
 #include <math.h>
 #include <tuple>
 #include <vector>

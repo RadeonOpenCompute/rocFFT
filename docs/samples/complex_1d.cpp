@@ -1,6 +1,7 @@
 #include "rocfft.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <hip/hip_runtime_api.h>
 #include <iostream>
 #include <stdio.h>
