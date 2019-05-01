@@ -2,6 +2,8 @@
  * Copyright (C) 2016 Advanced Micro Devices, Inc. All rights reserved.
  ******************************************************************************/
 
+#include<cstdlib>
+
 #ifndef __HIPFFT_H__
 #define __HIPFFT_H__
 

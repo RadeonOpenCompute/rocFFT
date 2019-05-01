@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <atomic>
+#include <cstdlib>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
