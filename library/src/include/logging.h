@@ -5,27 +5,26 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#include <cstring>
+#include <atomic>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <functional>
 #include <iomanip>
 #include <map>
-#include <unordered_map>
-#include <atomic>
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
-#include <memory>
-#include <functional>
+#include <string>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
-#include <string>
-#include <fstream>
 
-class tuple_helper
-{
-    protected:
+class tuple_helper {
+protected:
     /************************************************************************************
      * Print values
      ************************************************************************************/
@@ -39,18 +38,17 @@ class tuple_helper
     // Floating-point output
     static void print_value(std::ostream& os, double x)
     {
-        if(std::isnan(x))
+        if (std::isnan(x))
             os << ".nan";
-        else if(std::isinf(x))
+        else if (std::isinf(x))
             os << (x < 0 ? "-.inf" : ".inf");
-        else
-        {
+        else {
             char s[32];
             snprintf(s, sizeof(s) - 2, "%.17g", x);
 
             // If no decimal point or exponent, append .0
             char* end = s + strcspn(s, ".eE");
-            if(!*end)
+            if (!*end)
                 strcat(end, ".0");
             os << s;
         }
@@ -59,7 +57,7 @@ class tuple_helper
     // Character output
     static void print_value(std::ostream& os, char c)
     {
-        char s[]{c, 0};
+        char s[]{ c, 0 };
         os << std::quoted(s, '\'');
     }
 
@@ -74,8 +72,7 @@ class tuple_helper
      * Print tuples
      ************************************************************************************/
     template <typename T, size_t idx = std::tuple_size<T>{}>
-    struct print_tuple_recurse
-    {
+    struct print_tuple_recurse {
         template <typename F>
         __attribute__((always_inline)) void operator()(F& print_argument, const T& tuple)
         {
@@ -85,8 +82,7 @@ class tuple_helper
     };
 
     template <typename T>
-    struct print_tuple_recurse<T, 0>
-    {
+    struct print_tuple_recurse<T, 0> {
         template <typename F>
         __attribute__((always_inline)) void operator()(F& print_argument, const T& tuple)
         {
@@ -131,7 +127,7 @@ class tuple_helper
     static constexpr size_t hash(const char* s)
     {
         size_t seed = 0xcbf29ce484222325;
-        for(const char* p = s; *p; ++p)
+        for (const char* p = s; *p; ++p)
             seed = (seed ^ *p) * 0x100000001b3;
         return seed;
     }
@@ -141,8 +137,7 @@ class tuple_helper
 
     // Combine tuple value hashes, computing hash of all tuple values
     template <typename TUP, size_t idx = std::tuple_size<TUP>{}>
-    struct tuple_hash_recurse
-    {
+    struct tuple_hash_recurse {
         __attribute__((always_inline)) size_t operator()(const TUP& tup)
         {
             size_t seed = tuple_hash_recurse<TUP, idx - 2>{}(tup);
@@ -152,15 +147,13 @@ class tuple_helper
 
     // Leaf node
     template <typename TUP>
-    struct tuple_hash_recurse<TUP, 0>
-    {
+    struct tuple_hash_recurse<TUP, 0> {
         __attribute__((always_inline)) size_t operator()(const TUP&) { return 0; }
     };
 
     // Hash function class compatible with STL containers
     template <typename TUP>
-    struct hash_t
-    {
+    struct hash_t {
         static_assert(std::tuple_size<TUP>{} % 2 == 0, "Tuple size must be even");
         size_t operator()(const TUP& x) const { return tuple_hash_recurse<TUP>{}(x); }
     };
@@ -180,26 +173,22 @@ class tuple_helper
 
     // Recursively compare tuple values, short-circuiting
     template <typename TUP, size_t idx = std::tuple_size<TUP>{}>
-    struct tuple_equal_recurse
-    {
+    struct tuple_equal_recurse {
         bool operator()(const TUP& t1, const TUP& t2)
         {
-            return equal(std::get<idx - 1>(t1), std::get<idx - 1>(t2)) &&
-                   tuple_equal_recurse<TUP, idx - 2>{}(t1, t2);
+            return equal(std::get<idx - 1>(t1), std::get<idx - 1>(t2)) && tuple_equal_recurse<TUP, idx - 2>{}(t1, t2);
         }
     };
 
     // Leaf node
     template <typename TUP>
-    struct tuple_equal_recurse<TUP, 0>
-    {
+    struct tuple_equal_recurse<TUP, 0> {
         bool operator()(const TUP&, const TUP&) { return true; }
     };
 
     // Equality test class compatible with STL containers
     template <typename TUP>
-    struct equal_t
-    {
+    struct equal_t {
         static_assert(std::tuple_size<TUP>{} % 2 == 0, "Tuple size must be even");
         __attribute__((flatten)) bool operator()(const TUP& x, const TUP& y) const
         {
@@ -210,12 +199,12 @@ class tuple_helper
     /************************************************************************************
      * Log values (for log_trace and log_bench)
      ************************************************************************************/
-    public:
+public:
     template <typename H, typename... Ts>
     static void log_arguments(std::ostream& os, const char* sep, H head, Ts&&... xs)
     {
         os << head;
-        int x[] = {(os << sep << std::forward<Ts>(xs), 0)...};
+        int x[] = { (os << sep << std::forward<Ts>(xs), 0)... };
         os << "\n";
     }
 };
@@ -224,8 +213,7 @@ class tuple_helper
  * Profile kernel arguments
  ************************************************************************************/
 template <typename TUP>
-class argument_profile : tuple_helper
-{
+class argument_profile : tuple_helper {
     // Output stream
     std::ostream& os;
 
@@ -233,9 +221,9 @@ class argument_profile : tuple_helper
     std::shared_timed_mutex mutex;
 
     // Table mapping argument tuples into atomic counts
-    std::unordered_map<TUP, std::atomic_size_t*, hash_t<TUP>, equal_t<TUP>> map;
+    std::unordered_map<TUP, std::atomic_size_t*, hash_t<TUP>, equal_t<TUP> > map;
 
-    public:
+public:
     // A tuple of arguments is looked up in an unordered map.
     // A count of the number of calls with these arguments is kept.
     // arg is assumed to be an rvalue for efficiency
@@ -250,8 +238,7 @@ class argument_profile : tuple_helper
             p = map.find(arg);
 
             // If tuple already exists, atomically increment count and return
-            if(p != map.end())
-            {
+            if (p != map.end()) {
                 ++*p->second;
                 return;
             }
@@ -266,53 +253,55 @@ class argument_profile : tuple_helper
 
         // If new entry inserted, replace nullptr with new value
         // If tuple already exists, atomically increment count
-        if(inserted)
-            p->second = new std::atomic_size_t{1};
+        if (inserted)
+            p->second = new std::atomic_size_t{ 1 };
         else
             ++*p->second;
     }
 
     // Constructor
-    explicit argument_profile(std::ostream& os) : os(os) {}
+    explicit argument_profile(std::ostream& os)
+        : os(os)
+    {
+    }
 
     // Cleanup handler which dumps profile at destruction
     ~argument_profile()
     {
         // Print all of the tuples in the map
-        for(auto& p : map)
-        {
+        for (auto& p : map) {
             print_tuple(os,
-                        std::tuple_cat(p.first, std::make_tuple("call_count", p.second->load())));
+                std::tuple_cat(p.first, std::make_tuple("call_count", p.second->load())));
             delete p.second;
         }
     }
 };
 
-class LogSingleton
-{
-    public:
-        static LogSingleton& GetInstance()
-        {
-            static LogSingleton instance;
-            return instance;
-        }
-    private:
-        LogSingleton() {}
+class LogSingleton {
+public:
+    static LogSingleton& GetInstance()
+    {
+        static LogSingleton instance;
+        return instance;
+    }
 
-        rocfft_layer_mode layer_mode;
-        std::ostream* log_trace_os;
-        std::ostream* log_bench_os;
-        std::ostream* log_profile_os;
+private:
+    LogSingleton() {}
 
-        LogSingleton(LogSingleton const&);
-        void operator=(LogSingleton const&);
+    rocfft_layer_mode layer_mode;
+    std::ostream* log_trace_os;
+    std::ostream* log_bench_os;
+    std::ostream* log_profile_os;
 
-    public:
-        void SetLayerMode(rocfft_layer_mode mode ) { layer_mode = mode ;}
-        rocfft_layer_mode const GetLayerMode() { return layer_mode; }
-        std::ostream*& GetTraceOS() { return log_trace_os; }
-        std::ostream*& GetBenchOS() { return log_bench_os; }
-        std::ostream*& GetProfileOS() { return log_profile_os; }
+    LogSingleton(LogSingleton const&);
+    void operator=(LogSingleton const&);
+
+public:
+    void SetLayerMode(rocfft_layer_mode mode) { layer_mode = mode; }
+    rocfft_layer_mode const GetLayerMode() { return layer_mode; }
+    std::ostream*& GetTraceOS() { return log_trace_os; }
+    std::ostream*& GetBenchOS() { return log_bench_os; }
+    std::ostream*& GetProfileOS() { return log_profile_os; }
 };
 
 #define LOG_TRACE_ENABLED() (LogSingleton::GetInstance().GetLayerMode() & rocfft_layer_mode_log_trace)
@@ -325,7 +314,7 @@ class LogSingleton
 template <typename... Ts>
 inline void log_trace(Ts&&... xs)
 {
-    if(LOG_TRACE_ENABLED())
+    if (LOG_TRACE_ENABLED())
         tuple_helper::log_arguments(*LogSingleton::GetInstance().GetTraceOS(), ",", std::forward<Ts>(xs)...);
 }
 
@@ -336,7 +325,7 @@ inline void log_trace(Ts&&... xs)
 template <typename... Ts>
 inline void log_bench(Ts&&... xs)
 {
-    if(LOG_BENCH_ENABLED())
+    if (LOG_BENCH_ENABLED())
         tuple_helper::log_arguments(*LogSingleton::GetInstance().GetBenchOS(), " ", std::forward<Ts>(xs)...);
 }
 
@@ -347,8 +336,7 @@ inline void log_bench(Ts&&... xs)
 template <typename... Ts>
 inline void log_profile(const char* func, Ts&&... xs)
 {
-    if(LOG_PROFILE_ENABLED())
-    {
+    if (LOG_PROFILE_ENABLED()) {
         auto tup = std::make_tuple("rocfft_function", func, std::forward<Ts>(xs)...);
         static argument_profile<decltype(tup)> profile(LogSingleton::GetInstance().GetProfileOS());
         profile(std::move(tup));
@@ -356,4 +344,3 @@ inline void log_profile(const char* func, Ts&&... xs)
 }
 
 #endif
-

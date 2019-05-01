@@ -6,9 +6,9 @@
 /// @brief googletest based unit tester for rocfft
 ///
 
-#include <iostream>
-#include <gtest/gtest.h>
 #include <boost/program_options.hpp>
+#include <gtest/gtest.h>
+#include <iostream>
 
 #include "rocfft.h"
 #include "test_constants.h"
@@ -25,8 +25,7 @@ bool verbose;
 bool suppress_output = false;
 bool comparison_type = root_mean_square;
 
-
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
 
 #if 0
@@ -101,9 +100,7 @@ int main( int argc, char* argv[] )
 
     //::testing::InitGoogleTest( &myArgc, const_cast< char** >( &myArgv[ 0 ] ) );
 
-    ::testing::InitGoogleTest( &argc, argv );
+    ::testing::InitGoogleTest(&argc, argv);
 
     return RUN_ALL_TESTS();
-
-
 }

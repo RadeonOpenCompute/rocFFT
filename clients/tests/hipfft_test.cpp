@@ -2,15 +2,15 @@
  * Copyright (C) 2018 Advanced Micro Devices, Inc. All rights reserved.
  ******************************************************************************/
 
-#include <unistd.h>
-#include <gtest/gtest.h>
-#include <vector>
-#include <fftw3.h>
-#include <hip/hip_runtime_api.h>
-#include <hip/hip_vector_types.h>
 #include "hipfft.h"
 #include "rocfft_against_fftw.h"
 #include "test_constants.h"
+#include <fftw3.h>
+#include <gtest/gtest.h>
+#include <hip/hip_runtime_api.h>
+#include <hip/hip_vector_types.h>
+#include <unistd.h>
+#include <vector>
 
 TEST(hipfftTest, Create1dPlan)
 {
@@ -94,12 +94,13 @@ TEST(hipfftTest, RunR2C)
 {
     const size_t N = 4096;
     float in[N];
-    for (size_t i = 0; i < N; i++) in[i] = i + (i%3) - (i%7);
+    for (size_t i = 0; i < N; i++)
+        in[i] = i + (i % 3) - (i % 7);
 
-    hipfftReal *d_in;
-    hipfftComplex *d_out;
+    hipfftReal* d_in;
+    hipfftComplex* d_out;
     hipMalloc(&d_in, N * sizeof(hipfftReal));
-    hipMalloc(&d_out, (N/2 +1) * sizeof(hipfftComplex));
+    hipMalloc(&d_out, (N / 2 + 1) * sizeof(hipfftComplex));
 
     hipMemcpy(d_in, in, N * sizeof(hipfftReal), hipMemcpyHostToDevice);
 
@@ -110,8 +111,8 @@ TEST(hipfftTest, RunR2C)
 
     hipfftExecR2C(plan, d_in, d_out);
 
-    std::vector<hipfftComplex> out(N/2 +1);
-    hipMemcpy(&out[0], d_out, (N/2 +1) * sizeof(hipfftComplex), hipMemcpyDeviceToHost);
+    std::vector<hipfftComplex> out(N / 2 + 1);
+    hipMemcpy(&out[0], d_out, (N / 2 + 1) * sizeof(hipfftComplex), hipMemcpyDeviceToHost);
 
     hipfftDestroy(plan);
     hipFree(d_in);
@@ -119,19 +120,19 @@ TEST(hipfftTest, RunR2C)
     EXPECT_TRUE(workSize != 0);
 
     double ref_in[N];
-    for (size_t i = 0; i < N; i++) ref_in[i] = in[i];
+    for (size_t i = 0; i < N; i++)
+        ref_in[i] = in[i];
 
-    fftw_complex *ref_out;
+    fftw_complex* ref_out;
     fftw_plan ref_p;
 
-    ref_out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (N / 2 + 1));
+    ref_out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (N / 2 + 1));
     ref_p = fftw_plan_dft_r2c_1d(N, ref_in, ref_out, FFTW_ESTIMATE);
     fftw_execute(ref_p);
 
     double maxv = 0;
     double nrmse = 0; //normalized root mean square error
-    for (size_t i = 0; i < (N / 2 + 1); i++)
-    {
+    for (size_t i = 0; i < (N / 2 + 1); i++) {
         // printf("element %d: FFTW result %f, %f; hipFFT result %f, %f \n", \
         //   (int)i, ref_out[i][0], ref_out[i][1], out[i].x, out[i].y);
         double dr = ref_out[i][0] - out[i].x;
@@ -139,7 +140,7 @@ TEST(hipfftTest, RunR2C)
         maxv = fabs(ref_out[i][0]) > maxv ? fabs(ref_out[i][0]) : maxv;
         maxv = fabs(ref_out[i][1]) > maxv ? fabs(ref_out[i][1]) : maxv;
 
-        nrmse += ((dr*dr) + (di*di));
+        nrmse += ((dr * dr) + (di * di));
     }
     nrmse /= (double)((N / 2 + 1));
     nrmse = sqrt(nrmse);

@@ -1,14 +1,13 @@
-#include <iostream>
 #include "kernel_launch.h"
 #include "twiddles.h"
+#include <iostream>
 #include <string>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    if(argc != 3)
-    {
+    if (argc != 3) {
         std::cout << "Usage: " << argv[0]
-            << " length_option batch" << std::endl;
+                  << " length_option batch" << std::endl;
         std::cout << "length_option is either 4m or 16m; batch is number of transforms (positive integer);" << std::endl;
         std::cout << "Example: " << argv[0] << " 4m 8" << std::endl;
 
@@ -24,7 +23,7 @@ int main(int argc, char *argv[])
     std::string a1(argv[1]);
     std::string a2(argv[2]);
 
-    if(a1.compare("16m") == 0)
+    if (a1.compare("16m") == 0)
         n = 4096;
     else
         n = 2048;
@@ -33,24 +32,23 @@ int main(int argc, char *argv[])
 
     size_t nPad = n + 64;
 
-    float *cin = (float *)malloc(b*n*n*2*sizeof(float));
-    float *cot = (float *)malloc(b*n*n*2*sizeof(float));
+    float* cin = (float*)malloc(b * n * n * 2 * sizeof(float));
+    float* cot = (float*)malloc(b * n * n * 2 * sizeof(float));
 
-    for(size_t i=0; i<b*n*n*2; i++)
+    for (size_t i = 0; i < b * n * n * 2; i++)
         cin[i] = 1.0;
 
-    float *in = nullptr;
-    float *ot = nullptr;
-    float *tp = nullptr;
+    float* in = nullptr;
+    float* ot = nullptr;
+    float* tp = nullptr;
 
-    hipMalloc(&in, b*n*n*2*sizeof(float));
-    hipMalloc(&ot, b*n*n*2*sizeof(float));
-    hipMalloc(&tp, b*n*nPad*2*sizeof(float));
+    hipMalloc(&in, b * n * n * 2 * sizeof(float));
+    hipMalloc(&ot, b * n * n * 2 * sizeof(float));
+    hipMalloc(&tp, b * n * nPad * 2 * sizeof(float));
 
-    hipMemcpy(in, cin, b*n*n*2*sizeof(float), hipMemcpyHostToDevice);
+    hipMemcpy(in, cin, b * n * n * 2 * sizeof(float), hipMemcpyHostToDevice);
 
-    for(size_t i = 0; i<5; i++)
-    {
+    for (size_t i = 0; i < 5; i++) {
         dci[i].batch = b;
         dci[i].length.push_back(n);
         dci[i].length.push_back(n);
@@ -68,8 +66,8 @@ int main(int argc, char *argv[])
     dci[0].dimension = 2;
     dci[0].inStride.push_back(n);
     dci[0].outStride.push_back(nPad);
-    dci[0].iDist = n*n;
-    dci[0].oDist = n*nPad;
+    dci[0].iDist = n * n;
+    dci[0].oDist = n * nPad;
     dci[0].placement = rocfft_placement_notinplace;
     dci[0].scheme = CS_KERNEL_TRANSPOSE;
 
@@ -87,8 +85,8 @@ int main(int argc, char *argv[])
     dci[1].dimension = 1;
     dci[1].inStride.push_back(nPad);
     dci[1].outStride.push_back(n);
-    dci[1].iDist = n*nPad;
-    dci[1].oDist = n*n;
+    dci[1].iDist = n * nPad;
+    dci[1].oDist = n * n;
     dci[1].placement = rocfft_placement_notinplace;
     dci[1].scheme = CS_KERNEL_STOCKHAM;
     dci[1].twiddles = twiddles_create(dci[1].length[0]);
@@ -99,21 +97,20 @@ int main(int argc, char *argv[])
     dci[1].gridParam.tpb_x = 256;
     dci[1].gridParam.b_x = dci[1].length[1] * dci[1].batch;
 
-    if(n == 4096)
+    if (n == 4096)
         dci[1].devFnCall = &FN_PRFX(dfn_sp_op_ci_ci_stoc_2_4096);
     else
         dci[1].devFnCall = &FN_PRFX(dfn_sp_op_ci_ci_stoc_2_2048);
 
-
-    // Tranpose 2 
+    // Tranpose 2
     dci[2].dimension = 2;
     dci[2].inStride.push_back(n);
     dci[2].outStride.push_back(nPad);
-    dci[2].iDist = n*n;
-    dci[2].oDist = n*nPad;
+    dci[2].iDist = n * n;
+    dci[2].oDist = n * nPad;
     dci[2].placement = rocfft_placement_notinplace;
     dci[2].scheme = CS_KERNEL_TRANSPOSE;
-    dci[2].large1D = n*n;
+    dci[2].large1D = n * n;
     dci[2].twiddles_large = twiddles_create(dci[2].large1D);
 
     dci[2].bufIn[0] = ot;
@@ -126,12 +123,12 @@ int main(int argc, char *argv[])
 
     dci[2].devFnCall = &FN_PRFX(transpose_var1_sp);
 
-    // fft 2 
+    // fft 2
     dci[3].dimension = 1;
     dci[3].inStride.push_back(nPad);
     dci[3].outStride.push_back(nPad);
-    dci[3].iDist = n*nPad;
-    dci[3].oDist = n*nPad;
+    dci[3].iDist = n * nPad;
+    dci[3].oDist = n * nPad;
     dci[3].placement = rocfft_placement_inplace;
     dci[3].scheme = CS_KERNEL_STOCKHAM;
     dci[3].twiddles = twiddles_create(dci[3].length[0]);
@@ -142,17 +139,17 @@ int main(int argc, char *argv[])
     dci[3].gridParam.tpb_x = 256;
     dci[3].gridParam.b_x = dci[3].length[1] * dci[3].batch;
 
-    if(n == 4096)
+    if (n == 4096)
         dci[3].devFnCall = &FN_PRFX(dfn_sp_ip_ci_ci_stoc_2_4096);
     else
         dci[3].devFnCall = &FN_PRFX(dfn_sp_ip_ci_ci_stoc_2_2048);
 
-    // Tranpose 3 
+    // Tranpose 3
     dci[4].dimension = 2;
     dci[4].inStride.push_back(nPad);
     dci[4].outStride.push_back(n);
-    dci[4].iDist = n*nPad;
-    dci[4].oDist = n*n;
+    dci[4].iDist = n * nPad;
+    dci[4].oDist = n * n;
     dci[4].placement = rocfft_placement_notinplace;
     dci[4].scheme = CS_KERNEL_TRANSPOSE;
     dci[4].transTileDir = TTD_IP_VER;
@@ -167,10 +164,8 @@ int main(int argc, char *argv[])
 
     dci[4].devFnCall = &FN_PRFX(transpose_var1_sp);
 
-
     // warm-up run
-    for(size_t i = 0; i<5; i++)
-    {
+    for (size_t i = 0; i < 5; i++) {
         DevFnCall fn = dci[i].devFnCall;
         fn(&dci[i], &dco[i]);
     }
@@ -178,11 +173,10 @@ int main(int argc, char *argv[])
 
     // timed run
     hipEvent_t start[5], stop[5];
-    for(size_t i = 0; i<5; i++)
-    {
+    for (size_t i = 0; i < 5; i++) {
         hipEventCreate(&start[i]);
         hipEventCreate(&stop[i]);
-    
+
         hipEventRecord(start[i]);
         DevFnCall fn = dci[i].devFnCall;
         fn(&dci[i], &dco[i]);
@@ -192,16 +186,16 @@ int main(int argc, char *argv[])
     hipDeviceSynchronize();
 
     std::cout << std::endl;
-    std::cout << "Running transform size of " << n*n << " with batch of " << b << ", for total data size of " << (float)(n*n*b*2*sizeof(float))/1e6 << " MB" << std::endl;
-    std::cout << "Computation requires 5 kernels" << std::endl << std::endl;
+    std::cout << "Running transform size of " << n * n << " with batch of " << b << ", for total data size of " << (float)(n * n * b * 2 * sizeof(float)) / 1e6 << " MB" << std::endl;
+    std::cout << "Computation requires 5 kernels" << std::endl
+              << std::endl;
 
-    for(size_t i = 0; i<5; i++)
-    {
+    for (size_t i = 0; i < 5; i++) {
         float gpu_time;
         hipEventElapsedTime(&gpu_time, start[i], stop[i]);
         //std::cout << "Kernel " << i << " execution time: " << gpu_time << " ms" << std::endl;
-        
-        double gbps = (double)(b*n*n*2*sizeof(float)) / (0.5*1e6*gpu_time);
+
+        double gbps = (double)(b * n * n * 2 * sizeof(float)) / (0.5 * 1e6 * gpu_time);
         std::cout << "Kernel " << i << " bandwidth: " << gbps << " GB/s" << std::endl;
         hipEventDestroy(start[i]);
         hipEventDestroy(stop[i]);
@@ -216,5 +210,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-

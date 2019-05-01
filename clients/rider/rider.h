@@ -2,7 +2,6 @@
  * Copyright (C) 2016 Advanced Micro Devices, Inc. All rights reserved.
  ******************************************************************************/
 
-
 #ifndef RIDER_H
 #define RIDER_H
 
@@ -12,18 +11,17 @@
 
 #ifdef WIN32
 
-struct Timer
-{
+struct Timer {
     LARGE_INTEGER start, stop, freq;
 
 public:
-    Timer() { QueryPerformanceFrequency( &freq ); }
+    Timer() { QueryPerformanceFrequency(&freq); }
 
     void Start() { QueryPerformanceCounter(&start); }
     double Sample()
     {
-        QueryPerformanceCounter  ( &stop );
-        double time = (double)(stop.QuadPart-start.QuadPart) / (double)(freq.QuadPart);
+        QueryPerformanceCounter(&stop);
+        double time = (double)(stop.QuadPart - start.QuadPart) / (double)(freq.QuadPart);
         return time;
     }
 };
@@ -33,8 +31,7 @@ public:
 #include <mach/clock.h>
 #include <mach/mach.h>
 
-struct Timer
-{
+struct Timer {
     clock_serv_t clock;
     mach_timespec_t start, end;
 
@@ -53,15 +50,14 @@ public:
 
 #else
 
-#include <time.h>
 #include <math.h>
+#include <time.h>
 
-struct Timer
-{
+struct Timer {
     struct timespec start, end;
 
 public:
-    Timer() { }
+    Timer() {}
 
     void Start() { clock_gettime(CLOCK_MONOTONIC, &start); }
     double Sample()
@@ -75,4 +71,3 @@ public:
 #endif
 
 #endif // RIDER_H
-

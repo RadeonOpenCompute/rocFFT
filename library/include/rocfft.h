@@ -16,25 +16,23 @@
 extern "C" {
 #endif // __cplusplus
 
-
 /*! @brief Pointer type to plan structure
  *  @details This type is used to declare a plan handle that can be initialized with rocfft_plan_create
  *  */
-typedef struct rocfft_plan_t *rocfft_plan;
+typedef struct rocfft_plan_t* rocfft_plan;
 
 /*! @brief Pointer type to plan description structure
  *  @details This type is used to declare a plan description handle that can be initialized with rocfft_plan_description_create
  *  */
-typedef struct rocfft_plan_description_t *rocfft_plan_description;
+typedef struct rocfft_plan_description_t* rocfft_plan_description;
 
 /*! @brief Pointer type to execution info structure
  *  @details This type is used to declare an execution info handle that can be initialized with rocfft_execution_info_create
  *  */
-typedef struct rocfft_execution_info_t *rocfft_execution_info;
+typedef struct rocfft_execution_info_t* rocfft_execution_info;
 
 /*! @brief rocfft status/error codes */
-typedef enum rocfft_status_e
-{
+typedef enum rocfft_status_e {
     rocfft_status_success,
     rocfft_status_failure,
     rocfft_status_invalid_arg_value,
@@ -46,8 +44,7 @@ typedef enum rocfft_status_e
 } rocfft_status;
 
 /*! @brief Type of transform */
-typedef enum rocfft_transform_type_e
-{
+typedef enum rocfft_transform_type_e {
     rocfft_transform_type_complex_forward,
     rocfft_transform_type_complex_inverse,
     rocfft_transform_type_real_forward,
@@ -55,22 +52,19 @@ typedef enum rocfft_transform_type_e
 } rocfft_transform_type;
 
 /*! @brief Precision */
-typedef enum rocfft_precision_e
-{
+typedef enum rocfft_precision_e {
     rocfft_precision_single,
     rocfft_precision_double,
 } rocfft_precision;
 
 /*! @brief Result placement */
-typedef enum rocfft_result_placement_e
-{
+typedef enum rocfft_result_placement_e {
     rocfft_placement_inplace,
     rocfft_placement_notinplace,
 } rocfft_result_placement;
 
 /*! @brief Array type */
-typedef enum rocfft_array_type_e
-{
+typedef enum rocfft_array_type_e {
     rocfft_array_type_complex_interleaved,
     rocfft_array_type_complex_planar,
     rocfft_array_type_real,
@@ -79,21 +73,17 @@ typedef enum rocfft_array_type_e
 } rocfft_array_type;
 
 /*! @brief Execution mode */
-typedef enum rocfft_execution_mode_e
-{
+typedef enum rocfft_execution_mode_e {
     rocfft_exec_mode_nonblocking,
     rocfft_exec_mode_nonblocking_with_flush,
     rocfft_exec_mode_blocking,
 } rocfft_execution_mode;
-
-
 
 /*! @brief Library setup function, called once in program before start of library use */
 ROCFFT_EXPORT rocfft_status rocfft_setup();
 
 /*! @brief Library cleanup function, called once in program after end of library use */
 ROCFFT_EXPORT rocfft_status rocfft_cleanup();
-
 
 /*! @brief Create an FFT plan
  *
@@ -116,12 +106,11 @@ ROCFFT_EXPORT rocfft_status rocfft_cleanup();
  *  @param[in] description description handle created by rocfft_plan_description_create; can be
  *  null ptr for simple transforms
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_plan_create(    rocfft_plan *plan,
-                            					rocfft_result_placement placement,
-                                                rocfft_transform_type transform_type, rocfft_precision precision,
-                                                size_t dimensions, const size_t *lengths, size_t number_of_transforms,
-                                                const rocfft_plan_description description );
-
+ROCFFT_EXPORT rocfft_status rocfft_plan_create(rocfft_plan* plan,
+    rocfft_result_placement placement,
+    rocfft_transform_type transform_type, rocfft_precision precision,
+    size_t dimensions, const size_t* lengths, size_t number_of_transforms,
+    const rocfft_plan_description description);
 
 /*! @brief Execute an FFT plan
  *
@@ -139,17 +128,16 @@ ROCFFT_EXPORT rocfft_status rocfft_plan_create(    rocfft_plan *plan,
  *  @param[in,out] out_buffer array (of size 1 for interleaved data, of size 2 for planar data) of output buffers, can be nullptr for inplace result placement
  *  @param[in] info execution info handle created by rocfft_execution_info_create
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_execute(    const rocfft_plan plan,
-                                            void *in_buffer[],
-                                            void *out_buffer[],
-                                            rocfft_execution_info info );
+ROCFFT_EXPORT rocfft_status rocfft_execute(const rocfft_plan plan,
+    void* in_buffer[],
+    void* out_buffer[],
+    rocfft_execution_info info);
 
 /*! @brief Destroy an FFT plan
  *  @details This API frees the plan. This function destructs a plan after it is no longer needed.
  *  @param[in] plan plan handle
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_plan_destroy( rocfft_plan plan );
-
+ROCFFT_EXPORT rocfft_status rocfft_plan_destroy(rocfft_plan plan);
 
 #if 0
 /*! @brief Set scaling factor in single precision
@@ -166,7 +154,6 @@ ROCFFT_EXPORT rocfft_status rocfft_plan_description_set_scale_float( rocfft_plan
  *  */
 ROCFFT_EXPORT rocfft_status rocfft_plan_description_set_scale_double( rocfft_plan_description description, double scale );
 #endif
-
 
 /*! @brief Set data layout
  *
@@ -189,18 +176,18 @@ ROCFFT_EXPORT rocfft_status rocfft_plan_description_set_scale_double( rocfft_pla
  *  @param[in] out_strides array of strides, in each dimension, of output buffer; if set to null ptr library chooses defaults
  *  @param[in] out_distance distance between start of each data instance in output buffer
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_plan_description_set_data_layout(   rocfft_plan_description description,
-                                                                    rocfft_array_type in_array_type, rocfft_array_type out_array_type,
-                                                                    const size_t *in_offsets, const size_t *out_offsets,
-                                                                    size_t in_strides_size, const size_t *in_strides, size_t in_distance,
-                                                                    size_t out_strides_size, const size_t *out_strides, size_t out_distance );
+ROCFFT_EXPORT rocfft_status rocfft_plan_description_set_data_layout(rocfft_plan_description description,
+    rocfft_array_type in_array_type, rocfft_array_type out_array_type,
+    const size_t* in_offsets, const size_t* out_offsets,
+    size_t in_strides_size, const size_t* in_strides, size_t in_distance,
+    size_t out_strides_size, const size_t* out_strides, size_t out_distance);
 
 /*! @brief Get library version string
  *
  * @param[in, out] buf buffer of version string
  * @param[in] len the length of input string buffer, expecting minimum 30
  */
-ROCFFT_EXPORT rocfft_status rocfft_get_version_string(char *buf, size_t len);
+ROCFFT_EXPORT rocfft_status rocfft_get_version_string(char* buf, size_t len);
 
 #if 0
 /*! @brief Set devices in plan description
@@ -212,45 +199,42 @@ ROCFFT_EXPORT rocfft_status rocfft_get_version_string(char *buf, size_t len);
 ROCFFT_EXPORT rocfft_status rocfft_plan_description_set_devices( rocfft_plan_description description, void *devices, size_t number_of_devices );
 #endif
 
-
 /*! @brief Get work buffer size
  *  @details This is one of plan query functions to obtain information regarding a plan. This API gets the work buffer size.
  *  @param[in] plan plan handle
  *  @param[out] size_in_bytes size of needed work buffer in bytes
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_plan_get_work_buffer_size( const rocfft_plan plan, size_t *size_in_bytes );
+ROCFFT_EXPORT rocfft_status rocfft_plan_get_work_buffer_size(const rocfft_plan plan, size_t* size_in_bytes);
 
 /*! @brief Print all plan information
  *  @details This is one of plan query functions to obtain information regarding a plan. This API prints all plan info to stdout to help user verify plan specification.
  *  @param[in] plan plan handle
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_plan_get_print( const rocfft_plan plan );
-
+ROCFFT_EXPORT rocfft_status rocfft_plan_get_print(const rocfft_plan plan);
 
 /*! @brief Create plan description
  *  @details This API creates a plan description with which the user can set more plan properties
  *  @param[out] description plan description handle
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_plan_description_create( rocfft_plan_description *description );
+ROCFFT_EXPORT rocfft_status rocfft_plan_description_create(rocfft_plan_description* description);
 
 /*! @brief Destroy a plan description
  *  @details This API frees the plan description
  *  @param[in] description plan description handle
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_plan_description_destroy( rocfft_plan_description description );
+ROCFFT_EXPORT rocfft_status rocfft_plan_description_destroy(rocfft_plan_description description);
 
 /*! @brief Create execution info
  *  @details This API creates an execution info with which the user can control plan execution & retrieve execution information
  *  @param[out] info execution info handle
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_execution_info_create( rocfft_execution_info *info );
+ROCFFT_EXPORT rocfft_status rocfft_execution_info_create(rocfft_execution_info* info);
 
 /*! @brief Destroy an execution info
  *  @details This API frees the execution info
  *  @param[in] info execution info handle
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_execution_info_destroy( rocfft_execution_info info );
-
+ROCFFT_EXPORT rocfft_status rocfft_execution_info_destroy(rocfft_execution_info info);
 
 /*! @brief Set work buffer in execution info
  *
@@ -263,7 +247,7 @@ ROCFFT_EXPORT rocfft_status rocfft_execution_info_destroy( rocfft_execution_info
  *  @param[in] work_buffer work buffer
  *  @param[in] size_in_bytes size of work buffer in bytes
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_execution_info_set_work_buffer( rocfft_execution_info info, void *work_buffer, size_t size_in_bytes );
+ROCFFT_EXPORT rocfft_status rocfft_execution_info_set_work_buffer(rocfft_execution_info info, void* work_buffer, size_t size_in_bytes);
 
 #if 0
 /*! @brief Set execution mode in execution info
@@ -284,7 +268,7 @@ ROCFFT_EXPORT rocfft_status rocfft_execution_info_set_mode( rocfft_execution_inf
  *  @param[in] info execution info handle
  *  @param[in] stream underlying compute stream
  *  */
-ROCFFT_EXPORT rocfft_status rocfft_execution_info_set_stream( rocfft_execution_info info, void *stream );
+ROCFFT_EXPORT rocfft_status rocfft_execution_info_set_stream(rocfft_execution_info info, void* stream);
 
 #if 0
 /*! @brief Get events from execution info
@@ -300,10 +284,10 @@ ROCFFT_EXPORT rocfft_status rocfft_execution_info_get_events( const rocfft_execu
 
 /*! \brief Indicates if layer is active with bitmask*/
 typedef enum rocfft_layer_mode_ {
-    rocfft_layer_mode_none          = 0b0000000000,
-    rocfft_layer_mode_log_trace     = 0b0000000001,
-    rocfft_layer_mode_log_bench     = 0b0000000010,
-    rocfft_layer_mode_log_profile   = 0b0000000100,
+    rocfft_layer_mode_none = 0b0000000000,
+    rocfft_layer_mode_log_trace = 0b0000000001,
+    rocfft_layer_mode_log_bench = 0b0000000010,
+    rocfft_layer_mode_log_profile = 0b0000000100,
 } rocfft_layer_mode;
 
 #ifdef __cplusplus
@@ -311,4 +295,3 @@ typedef enum rocfft_layer_mode_ {
 #endif // __cplusplus
 
 #endif // __ROCFFT_H__
-

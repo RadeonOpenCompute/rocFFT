@@ -3,15 +3,13 @@
  *
  * ************************************************************************ */
 
-
+#include "testing_transpose.hpp"
+#include <functional>
 #include <gtest/gtest.h>
 #include <math.h>
 #include <stdexcept>
-#include <vector>
 #include <tuple>
-#include <functional>
-#include "testing_transpose.hpp"
-
+#include <vector>
 
 using ::testing::TestWithParam;
 using ::testing::Values;
@@ -31,7 +29,6 @@ README: This file contains testers to verify the correctness of
         Normal users only need to get the library routines without testers
      =================================================================== */
 
-
 /* =====================================================================
 Advance users only: BrainStorm the parameters but do not make artificial one which invalidates the matrix.
 Yet, the goal of this file is to verify result correctness not argument-checkers.
@@ -39,37 +36,32 @@ Yet, the goal of this file is to verify result correctness not argument-checkers
 Representative sampling is sufficient, endless brute-force sampling is not necessary
 =================================================================== */
 
-
 // small sizes
 
 //vector of vector, each triple is a {rows, cols, lda, ldb};
 //add/delete this list in pairs, like {3, 4, 4, 5}
 
-const
-vector<vector<size_t>> size_range = {
-                                            { 3, 3, 3, 3},
-                                            { 3, 3, 4, 4},
-                                            {10, 10, 10, 10},
-                                            {100, 100, 102, 101},
-                                            {1024, 1024, 1024, 1024},
-                                            {1119, 111, 2000, 111},
-                                            {5000, 5000, 6000, 7000}
+const vector<vector<size_t> > size_range = {
+    { 3, 3, 3, 3 },
+    { 3, 3, 4, 4 },
+    { 10, 10, 10, 10 },
+    { 100, 100, 102, 101 },
+    { 1024, 1024, 1024, 1024 },
+    { 1119, 111, 2000, 111 },
+    { 5000, 5000, 6000, 7000 }
 
 };
 
-static size_t batch_range[] = {1, 100};
-
+static size_t batch_range[] = { 1, 100 };
 
 /* ===============Google Unit Test==================================================== */
 
-
-class transpose_gtest: public :: TestWithParam <transpose_tuple>
-{
-    protected:
-        transpose_gtest(){}
-        virtual ~transpose_gtest(){}
-        virtual void SetUp(){}
-        virtual void TearDown(){}
+class transpose_gtest : public ::TestWithParam<transpose_tuple> {
+protected:
+    transpose_gtest() {}
+    virtual ~transpose_gtest() {}
+    virtual void SetUp() {}
+    virtual void TearDown() {}
 };
 
 /*
@@ -116,5 +108,3 @@ INSTANTIATE_TEST_CASE_P(rocfft_transpose,
                         )
                        );
 */
-
-
