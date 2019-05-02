@@ -2,7 +2,7 @@
  * Copyright (C) 2016 Advanced Micro Devices, Inc. All rights reserved.
  ******************************************************************************/
 
-#include <assert.h>
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
