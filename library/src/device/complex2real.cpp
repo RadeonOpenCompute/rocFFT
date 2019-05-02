@@ -9,28 +9,32 @@
 #include <iostream>
 
 template <typename T>
-__global__ void
-complex2real_kernel(size_t input_size, size_t input_stride,
-                    size_t output_stride, T *input, size_t input_distance,
-                    real_type_t<T> *output, size_t output_distance) {
-  size_t tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+__global__ void complex2real_kernel(size_t          input_size,
+                                    size_t          input_stride,
+                                    size_t          output_stride,
+                                    T*              input,
+                                    size_t          input_distance,
+                                    real_type_t<T>* output,
+                                    size_t          output_distance)
+{
+    size_t tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
 
-  size_t input_offset = hipBlockIdx_z * input_distance;
-  size_t output_offset = hipBlockIdx_z * output_distance;
+    size_t input_offset  = hipBlockIdx_z * input_distance;
+    size_t output_offset = hipBlockIdx_z * output_distance;
 
-  input_offset += hipBlockIdx_y * input_stride; // notice for 1D, hipBlockIdx_y
-                                                // == 0 and thus has no effect
-                                                // for input_offset
-  output_offset +=
-      hipBlockIdx_y * output_stride; // notice for 1D, hipBlockIdx_y == 0 and
-                                     // thus has no effect for output_offset
+    input_offset += hipBlockIdx_y * input_stride; // notice for 1D, hipBlockIdx_y
+    // == 0 and thus has no effect
+    // for input_offset
+    output_offset += hipBlockIdx_y * output_stride; // notice for 1D, hipBlockIdx_y == 0 and
+    // thus has no effect for output_offset
 
-  input += input_offset;
-  output += output_offset;
+    input += input_offset;
+    output += output_offset;
 
-  if (tid < input_size) {
-    output[tid] = input[tid].x;
-  }
+    if(tid < input_size)
+    {
+        output[tid] = input[tid].x;
+    }
 }
 
 /*! \brief auxiliary function
@@ -71,49 +75,50 @@ complex2real_kernel(size_t input_size, size_t input_stride,
     ********************************************************************/
 
 // currently only works for stride=1 cases
-void complex2real(const void *data_p, void *back_p) {
-  DeviceCallIn *data = (DeviceCallIn *)data_p;
+void complex2real(const void* data_p, void* back_p)
+{
+    DeviceCallIn* data = (DeviceCallIn*)data_p;
 
-  size_t input_size = data->node->length[0];
+    size_t input_size = data->node->length[0];
 
-  if (input_size == 1)
-    return;
+    if(input_size == 1)
+        return;
 
-  size_t input_distance = data->node->iDist;
-  size_t output_distance = data->node->oDist;
+    size_t input_distance  = data->node->iDist;
+    size_t output_distance = data->node->oDist;
 
-  size_t input_stride = (data->node->length.size() > 1)
-                            ? data->node->inStride[1]
-                            : input_distance;
-  size_t output_stride = (data->node->length.size() > 1)
-                             ? data->node->outStride[1]
-                             : output_distance;
+    size_t input_stride
+        = (data->node->length.size() > 1) ? data->node->inStride[1] : input_distance;
+    size_t output_stride
+        = (data->node->length.size() > 1) ? data->node->outStride[1] : output_distance;
 
-  void *input_buffer = data->bufIn[0];
-  void *output_buffer = data->bufOut[0];
+    void* input_buffer  = data->bufIn[0];
+    void* output_buffer = data->bufOut[0];
 
-  size_t batch = data->node->batch;
-  size_t high_dimension = 1;
-  if (data->node->length.size() > 1) {
-    for (int i = 1; i < data->node->length.size(); i++) {
-      high_dimension *= data->node->length[i];
+    size_t batch          = data->node->batch;
+    size_t high_dimension = 1;
+    if(data->node->length.size() > 1)
+    {
+        for(int i = 1; i < data->node->length.size(); i++)
+        {
+            high_dimension *= data->node->length[i];
+        }
     }
-  }
-  rocfft_precision precision = data->node->precision;
-  //
-  size_t blocks = (input_size - 1) / 512 + 1;
+    rocfft_precision precision = data->node->precision;
+    //
+    size_t blocks = (input_size - 1) / 512 + 1;
 
-  if (high_dimension > 65535 || batch > 65535)
-    printf("2D and 3D or batch is too big; not implemented\n");
-  // the z dimension is used for batching,
-  // if 2D or 3D, the number of blocks along y will multiple high dimensions
-  // notice the maximum # of thread blocks in y & z is 65535 according to HIP &&
-  // CUDA
-  dim3 grid(blocks, high_dimension, batch);
-  dim3 threads(512, 1, 1); // use 512 threads (work items)
+    if(high_dimension > 65535 || batch > 65535)
+        printf("2D and 3D or batch is too big; not implemented\n");
+    // the z dimension is used for batching,
+    // if 2D or 3D, the number of blocks along y will multiple high dimensions
+    // notice the maximum # of thread blocks in y & z is 65535 according to HIP &&
+    // CUDA
+    dim3 grid(blocks, high_dimension, batch);
+    dim3 threads(512, 1, 1); // use 512 threads (work items)
 
-  hipStream_t rocfft_stream = data->rocfft_stream;
-  /*
+    hipStream_t rocfft_stream = data->rocfft_stream;
+    /*
   float2* tmp; tmp = (float2*)malloc(sizeof(float2)*input_size*batch);
   hipMemcpy(tmp, input_buffer, sizeof(float2)*input_size*batch,
   hipMemcpyDeviceToHost);
@@ -129,66 +134,89 @@ void complex2real(const void *data_p, void *back_p) {
   }
 
   free(tmp);*/
-  if (precision == rocfft_precision_single)
-    hipLaunchKernelGGL(complex2real_kernel<float2>, grid, threads, 0,
-                       rocfft_stream, input_size, input_stride, output_stride,
-                       (float2 *)input_buffer, input_distance,
-                       (float *)output_buffer, output_distance);
-  else
-    hipLaunchKernelGGL(complex2real_kernel<double2>, grid, threads, 0,
-                       rocfft_stream, input_size, input_stride, output_stride,
-                       (double2 *)input_buffer, input_distance,
-                       (double *)output_buffer, output_distance);
+    if(precision == rocfft_precision_single)
+        hipLaunchKernelGGL(complex2real_kernel<float2>,
+                           grid,
+                           threads,
+                           0,
+                           rocfft_stream,
+                           input_size,
+                           input_stride,
+                           output_stride,
+                           (float2*)input_buffer,
+                           input_distance,
+                           (float*)output_buffer,
+                           output_distance);
+    else
+        hipLaunchKernelGGL(complex2real_kernel<double2>,
+                           grid,
+                           threads,
+                           0,
+                           rocfft_stream,
+                           input_size,
+                           input_stride,
+                           output_stride,
+                           (double2*)input_buffer,
+                           input_distance,
+                           (double*)output_buffer,
+                           output_distance);
 
-  return;
+    return;
 }
 
 /*============================================================================================*/
 
 template <typename T>
-__global__ void
-hermitian2complex_kernel(size_t hermitian_size, size_t dim_0, size_t dim_1,
-                         size_t dim_2, size_t input_stride,
-                         size_t output_stride, T *input, size_t input_distance,
-                         T *output, size_t output_distance) {
-  size_t tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+__global__ void hermitian2complex_kernel(size_t hermitian_size,
+                                         size_t dim_0,
+                                         size_t dim_1,
+                                         size_t dim_2,
+                                         size_t input_stride,
+                                         size_t output_stride,
+                                         T*     input,
+                                         size_t input_distance,
+                                         T*     output,
+                                         size_t output_distance)
+{
+    size_t tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
 
-  size_t input_offset = hipBlockIdx_z * input_distance;
-  size_t outputs_offset = hipBlockIdx_z * output_distance; // straight copy
-  size_t outputc_offset = hipBlockIdx_z * output_distance; // conjugate copy
+    size_t input_offset   = hipBlockIdx_z * input_distance;
+    size_t outputs_offset = hipBlockIdx_z * output_distance; // straight copy
+    size_t outputc_offset = hipBlockIdx_z * output_distance; // conjugate copy
 
-  // straight copy indices
-  size_t is0 = tid;
-  size_t is1 = hipBlockIdx_y % dim_1;
-  size_t is2 = hipBlockIdx_y / dim_1;
+    // straight copy indices
+    size_t is0 = tid;
+    size_t is1 = hipBlockIdx_y % dim_1;
+    size_t is2 = hipBlockIdx_y / dim_1;
 
-  // conjugate copy indices
-  size_t ic0 = (is0 == 0) ? 0 : dim_0 - is0;
-  size_t ic1 = (is1 == 0) ? 0 : dim_1 - is1;
-  size_t ic2 = (is2 == 0) ? 0 : dim_2 - is2;
+    // conjugate copy indices
+    size_t ic0 = (is0 == 0) ? 0 : dim_0 - is0;
+    size_t ic1 = (is1 == 0) ? 0 : dim_1 - is1;
+    size_t ic2 = (is2 == 0) ? 0 : dim_2 - is2;
 
-  input_offset += hipBlockIdx_y * input_stride + is0; // notice for 1D,
-                                                      // hipBlockIdx_y == 0 and
-                                                      // thus has no effect for
-                                                      // input_offset
-  outputs_offset += (is2 * dim_1 + is1) * output_stride + is0;
-  outputc_offset += (ic2 * dim_1 + ic1) * output_stride + ic0;
+    input_offset += hipBlockIdx_y * input_stride + is0; // notice for 1D,
+    // hipBlockIdx_y == 0 and
+    // thus has no effect for
+    // input_offset
+    outputs_offset += (is2 * dim_1 + is1) * output_stride + is0;
+    outputc_offset += (ic2 * dim_1 + ic1) * output_stride + ic0;
 
-  input += input_offset;
-  T *outputs = output + outputs_offset;
-  T *outputc = output + outputc_offset;
+    input += input_offset;
+    T* outputs = output + outputs_offset;
+    T* outputc = output + outputc_offset;
 
-  if ((is0 == 0) || (is0 * 2 == dim_0)) // simply write the element to output
-  {
-    outputs[0] = input[0];
-    return;
-  }
+    if((is0 == 0) || (is0 * 2 == dim_0)) // simply write the element to output
+    {
+        outputs[0] = input[0];
+        return;
+    }
 
-  if (is0 < hermitian_size) {
-    T res = input[0];
-    outputs[0] = res;
-    outputc[0] = T(res.x, -res.y);
-  }
+    if(is0 < hermitian_size)
+    {
+        T res      = input[0];
+        outputs[0] = res;
+        outputc[0] = T(res.x, -res.y);
+    }
 }
 
 /*! \brief auxiliary function
@@ -229,61 +257,61 @@ hermitian2complex_kernel(size_t hermitian_size, size_t dim_0, size_t dim_1,
 
     ********************************************************************/
 
-void hermitian2complex(const void *data_p, void *back_p) {
-  DeviceCallIn *data = (DeviceCallIn *)data_p;
+void hermitian2complex(const void* data_p, void* back_p)
+{
+    DeviceCallIn* data = (DeviceCallIn*)data_p;
 
-  size_t dim_0 = data->node->length[0]; // dim_0 is the innermost dimension
-  size_t hermitian_size = dim_0 / 2 + 1;
+    size_t dim_0          = data->node->length[0]; // dim_0 is the innermost dimension
+    size_t hermitian_size = dim_0 / 2 + 1;
 
-  if (dim_0 == 1)
-    return;
+    if(dim_0 == 1)
+        return;
 
-  size_t input_distance = data->node->iDist;
-  size_t output_distance = data->node->oDist;
+    size_t input_distance  = data->node->iDist;
+    size_t output_distance = data->node->oDist;
 
-  size_t input_stride = (data->node->length.size() > 1)
-                            ? data->node->inStride[1]
-                            : input_distance;
-  size_t output_stride = (data->node->length.size() > 1)
-                             ? data->node->outStride[1]
-                             : output_distance;
+    size_t input_stride
+        = (data->node->length.size() > 1) ? data->node->inStride[1] : input_distance;
+    size_t output_stride
+        = (data->node->length.size() > 1) ? data->node->outStride[1] : output_distance;
 
-  void *input_buffer = data->bufIn[0];
-  void *output_buffer = data->bufOut[0];
+    void* input_buffer  = data->bufIn[0];
+    void* output_buffer = data->bufOut[0];
 
-  size_t batch = data->node->batch;
-  size_t high_dimension = 1;
-  if (data->node->length.size() > 1) {
-    for (int i = 1; i < data->node->length.size(); i++) {
-      high_dimension *= data->node->length[i];
+    size_t batch          = data->node->batch;
+    size_t high_dimension = 1;
+    if(data->node->length.size() > 1)
+    {
+        for(int i = 1; i < data->node->length.size(); i++)
+        {
+            high_dimension *= data->node->length[i];
+        }
     }
-  }
-  rocfft_precision precision = data->node->precision;
-  //
-  size_t blocks = (hermitian_size - 1) / 512 + 1;
+    rocfft_precision precision = data->node->precision;
+    //
+    size_t blocks = (hermitian_size - 1) / 512 + 1;
 
-  if (data->node->length.size() > 3)
-    std::cout << "Error: dimension larger than 3, which is not handled"
-              << std::endl;
+    if(data->node->length.size() > 3)
+        std::cout << "Error: dimension larger than 3, which is not handled" << std::endl;
 
-  size_t dim_1 = 1, dim_2 = 1;
-  if (data->node->length.size() >= 2)
-    dim_1 = data->node->length[1];
-  if (data->node->length.size() == 3)
-    dim_2 = data->node->length[2];
+    size_t dim_1 = 1, dim_2 = 1;
+    if(data->node->length.size() >= 2)
+        dim_1 = data->node->length[1];
+    if(data->node->length.size() == 3)
+        dim_2 = data->node->length[2];
 
-  if (high_dimension > 65535 || batch > 65535)
-    printf("2D and 3D or batch is too big; not implemented\n");
-  // the z dimension is used for batching,
-  // if 2D or 3D, the number of blocks along y will multiple high dimensions
-  // notice the maximum # of thread blocks in y & z is 65535 according to HIP &&
-  // CUDA
-  dim3 grid(blocks, high_dimension, batch);
-  dim3 threads(512, 1, 1); // use 512 threads (work items)
+    if(high_dimension > 65535 || batch > 65535)
+        printf("2D and 3D or batch is too big; not implemented\n");
+    // the z dimension is used for batching,
+    // if 2D or 3D, the number of blocks along y will multiple high dimensions
+    // notice the maximum # of thread blocks in y & z is 65535 according to HIP &&
+    // CUDA
+    dim3 grid(blocks, high_dimension, batch);
+    dim3 threads(512, 1, 1); // use 512 threads (work items)
 
-  hipStream_t rocfft_stream = data->rocfft_stream;
+    hipStream_t rocfft_stream = data->rocfft_stream;
 
-  /*float2* tmp; tmp = (float2*)malloc(sizeof(float2)*input_distance*batch);
+    /*float2* tmp; tmp = (float2*)malloc(sizeof(float2)*input_distance*batch);
   hipMemcpy(tmp, input_buffer, sizeof(float2)*input_distance*batch,
   hipMemcpyDeviceToHost);
 
@@ -302,20 +330,40 @@ void hermitian2complex(const void *data_p, void *back_p) {
       }
   }*/
 
-  if (precision == rocfft_precision_single)
-    hipLaunchKernelGGL(hermitian2complex_kernel<float2>, grid, threads, 0,
-                       rocfft_stream, hermitian_size, dim_0, dim_1, dim_2,
-                       input_stride, output_stride, (float2 *)input_buffer,
-                       input_distance, (float2 *)output_buffer,
-                       output_distance);
-  else
-    hipLaunchKernelGGL(hermitian2complex_kernel<double2>, grid, threads, 0,
-                       rocfft_stream, hermitian_size, dim_0, dim_1, dim_2,
-                       input_stride, output_stride, (double2 *)input_buffer,
-                       input_distance, (double2 *)output_buffer,
-                       output_distance);
+    if(precision == rocfft_precision_single)
+        hipLaunchKernelGGL(hermitian2complex_kernel<float2>,
+                           grid,
+                           threads,
+                           0,
+                           rocfft_stream,
+                           hermitian_size,
+                           dim_0,
+                           dim_1,
+                           dim_2,
+                           input_stride,
+                           output_stride,
+                           (float2*)input_buffer,
+                           input_distance,
+                           (float2*)output_buffer,
+                           output_distance);
+    else
+        hipLaunchKernelGGL(hermitian2complex_kernel<double2>,
+                           grid,
+                           threads,
+                           0,
+                           rocfft_stream,
+                           hermitian_size,
+                           dim_0,
+                           dim_1,
+                           dim_2,
+                           input_stride,
+                           output_stride,
+                           (double2*)input_buffer,
+                           input_distance,
+                           (double2*)output_buffer,
+                           output_distance);
 
-  /*float2* tmpo; tmpo = (float2*)malloc(sizeof(float2)*output_distance*batch);
+    /*float2* tmpo; tmpo = (float2*)malloc(sizeof(float2)*output_distance*batch);
   hipMemcpy(tmpo, output_buffer, sizeof(float2)*output_distance*batch,
   hipMemcpyDeviceToHost);
 
@@ -326,5 +374,5 @@ void hermitian2complex(const void *data_p, void *back_p) {
   tmpo[j*output_stride + i].x, tmpo[j*output_stride + i].y);
       }
   }*/
-  return;
+    return;
 }

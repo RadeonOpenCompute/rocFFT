@@ -18,14 +18,15 @@
 
 size_t number_of_random_tests;
 time_t random_test_parameter_seed;
-float tolerance;
+float  tolerance;
 double rmse_tolerance;
-bool verbose;
+bool   verbose;
 
 bool suppress_output = false;
 bool comparison_type = root_mean_square;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[])
+{
 
 #if 0
     // Declare the supported options.
@@ -84,24 +85,23 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-  char v[256];
-  rocfft_get_version_string(v, 256);
-  std::cout << "rocFFT version: " << v << std::endl;
+    char v[256];
+    rocfft_get_version_string(v, 256);
+    std::cout << "rocFFT version: " << v << std::endl;
 
-  tolerance = 0.001f;
+    tolerance = 0.001f;
 
-  // this rmse_tolerance is not absolute; it is for a 4096-point single
-  // precision transform
-  // the actual rmse tolerance is this value times sqrt(problem-size/4096)
-  rmse_tolerance = 0.00002;
+    // this rmse_tolerance is not absolute; it is for a 4096-point single
+    // precision transform
+    // the actual rmse tolerance is this value times sqrt(problem-size/4096)
+    rmse_tolerance = 0.00002;
 
-  std::cout << "Result comparison tolerance is " << tolerance << std::endl;
-  std::cout << "Result comparison RMSE relative tolerance is " << rmse_tolerance
-            << std::endl;
+    std::cout << "Result comparison tolerance is " << tolerance << std::endl;
+    std::cout << "Result comparison RMSE relative tolerance is " << rmse_tolerance << std::endl;
 
-  //::testing::InitGoogleTest( &myArgc, const_cast< char** >( &myArgv[ 0 ] ) );
+    //::testing::InitGoogleTest( &myArgc, const_cast< char** >( &myArgv[ 0 ] ) );
 
-  ::testing::InitGoogleTest(&argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
 
-  return RUN_ALL_TESTS();
+    return RUN_ALL_TESTS();
 }

@@ -60,12 +60,21 @@ static size_t batch_range[] = {1, 100};
 /* ===============Google Unit
  * Test==================================================== */
 
-class transpose_gtest : public ::TestWithParam<transpose_tuple> {
+class transpose_gtest : public ::TestWithParam<transpose_tuple>
+{
 protected:
-  transpose_gtest() {}
-  virtual ~transpose_gtest() {}
-  virtual void SetUp() {}
-  virtual void TearDown() {}
+    transpose_gtest()
+    {
+    }
+    virtual ~transpose_gtest()
+    {
+    }
+    virtual void SetUp()
+    {
+    }
+    virtual void TearDown()
+    {
+    }
 };
 
 /*
