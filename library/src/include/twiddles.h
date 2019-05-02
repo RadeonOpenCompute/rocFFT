@@ -16,7 +16,7 @@
 #define TWIDDLE_DEE 8
 
 //	help function: Find the smallest power of 2 that is >= n; return its
-//power of 2 factor
+//  power of 2 factor
 //	e.g., CeilPo2 (7) returns 3 : (2^3 >= 7)
 static inline size_t CeilPo2(size_t n) {
   size_t v = 1, t = 0;

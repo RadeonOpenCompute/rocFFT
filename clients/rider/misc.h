@@ -22,10 +22,10 @@ void setupBuffers(std::vector<int> devices, const size_t bufferSizeBytesIn,
 void clearBuffers(void *buffersIn[], void *buffersOut[]);
 
 //	This is used to either wrap a HIP function call, or to explicitly check
-//a variable for an OpenCL error condition.
+//  a variable for an OpenCL error condition.
 //	If an error occurs, we throw.
 //	Note: std::runtime_error does not take unicode strings as input, so only
-//strings supported
+//  strings supported
 inline hipError_t hip_V_Throw(hipError_t res, const std::string &msg,
                               size_t lineno, const std::string &fileName) {
   switch (res) {

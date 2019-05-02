@@ -28,8 +28,9 @@ public:
 
 #elif defined(__APPLE__) || defined(__MACOSX)
 
-#include <mach/clock.h>
 #include <mach/mach.h>
+
+#include <mach/clock.h>
 
 struct Timer {
   clock_serv_t clock;
@@ -50,8 +51,9 @@ public:
 
 #else
 
-#include <cmath>
 #include <time.h>
+
+#include <cmath>
 
 struct Timer {
   struct timespec start, end;

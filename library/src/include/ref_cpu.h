@@ -614,7 +614,7 @@ public:
       hipMemcpy(lb, tmp_mem, out_size_bytes,
                 hipMemcpyHostToHost); // hermitan only works for batch=1, dense
                                       // packed cases
-      return; // TODO
+      return;                         // TODO
     }
 
     if (data->node->scheme == CS_KERNEL_TRANSPOSE) {
