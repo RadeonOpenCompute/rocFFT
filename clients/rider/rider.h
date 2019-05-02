@@ -50,7 +50,7 @@ public:
 
 #else
 
-#include <math.h>
+#include <cmath>
 #include <time.h>
 
 struct Timer {

@@ -1,11 +1,14 @@
-#include "rocfft.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <hip/hip_runtime_api.h>
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
+
+#include <hip/hip_runtime_api.h>
+
+#include "rocfft.h"
 
 int main() {
   // For size N <= 4096
