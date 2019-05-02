@@ -18,7 +18,7 @@
 namespace po = boost::program_options;
 
 //	This is used with the program_options class so that the user can type an
-//integer on the command line
+//  integer on the command line
 //	and we store into an enum varaible
 template <class _Elem, class _Traits>
 std::basic_istream<_Elem, _Traits> &
@@ -51,9 +51,9 @@ int transform(size_t *lengths, const size_t *inStrides,
               int deviceId, int platformId, bool printInfo,
               unsigned profile_count) {
   //	Our command line does not specify what dimension FFT we wish to
-  //transform; we decode
+  //    transform; we decode
   //	this from the lengths that the user specifies for X, Y, Z.  A length of
-  //one means that
+  //    one means that
   //	The user does not want that dimension.
 
   const size_t max_dimensions = 3;
@@ -675,7 +675,7 @@ int transform(size_t *lengths, const size_t *inStrides,
 
 int main(int argc, char *argv[]) {
   //	This helps with mixing output of both wide and narrow characters to the
-  //screen
+  //    screen
   std::ios::sync_with_stdio(false);
 
   int deviceId = 0;
@@ -781,7 +781,7 @@ int main(int argc, char *argv[]) {
 
     if (vm.count("help")) {
       //	This needs to be 'cout' as program-options does not support
-      //wcout yet
+      //    wcout yet
       std::cout << desc << std::endl;
       return 0;
     }

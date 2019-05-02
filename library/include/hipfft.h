@@ -2,8 +2,6 @@
  * Copyright (C) 2016 Advanced Micro Devices, Inc. All rights reserved.
  ******************************************************************************/
 
-#include<cstdlib>
-
 #ifndef __HIPFFT_H__
 #define __HIPFFT_H__
 
@@ -15,6 +13,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <cstdlib>
 
 typedef enum hipfftResult_t {
   HIPFFT_SUCCESS = 0,        //  The hipFFT operation was successful

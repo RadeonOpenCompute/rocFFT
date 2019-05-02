@@ -5,7 +5,6 @@
 /*! @file rocfft.h
  *  rocfft.h defines all the public interfaces and types
  *  */
-#include <cstdlib>
 
 #ifndef __ROCFFT_H__
 #define __ROCFFT_H__
@@ -16,6 +15,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+
+#include <cstdlib>
 
 /*! @brief Pointer type to plan structure
  *  @details This type is used to declare a plan handle that can be initialized
