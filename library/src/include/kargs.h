@@ -6,7 +6,7 @@
 #if !defined(KARGS_H)
 #define KARGS_H
 
-#include <cstdlib>
+#include <cstddef>
 #include <vector>
 
 #define KERN_ARGS_ARRAY_WIDTH 16

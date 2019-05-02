@@ -10,7 +10,7 @@
 
 #include <cassert>
 #include <cmath>
-#include <cstdlib>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 

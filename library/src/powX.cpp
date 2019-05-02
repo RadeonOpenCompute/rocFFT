@@ -4,7 +4,7 @@
 
 #include <atomic>
 #include <cassert>
-#include <cstdlib>
+#include <cstddef>
 #include <iostream>
 #include <unordered_map>
 #include <vector>

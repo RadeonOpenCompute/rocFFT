@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-#include <cstdlib>
+#include <cstddef>
 
 typedef enum hipfftResult_t {
   HIPFFT_SUCCESS = 0,        //  The hipFFT operation was successful

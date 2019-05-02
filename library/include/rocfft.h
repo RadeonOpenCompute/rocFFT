@@ -16,7 +16,7 @@
 extern "C" {
 #endif // __cplusplus
 
-#include <cstdlib>
+#include <cstddef>
 
 /*! @brief Pointer type to plan structure
  *  @details This type is used to declare a plan handle that can be initialized
