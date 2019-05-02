@@ -2,22 +2,27 @@
  * Copyright (C) 2016 Advanced Micro Devices, Inc. All rights reserved.
  ******************************************************************************/
 
-#include <assert.h>
+#include <cassert>
 #include <atomic>
 #include <cstdlib>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 
-#include "function_pool.h"
-#include "kernel_launch.h"
-#include "plan.h"
-#include "radix_table.h"
-#include "real2complex.h"
-#include "ref_cpu.h"
-#include "repo.h"
 #include "rocfft.h"
+
+#include "plan.h"
+#include "repo.h"
 #include "transform.h"
+
+#include "radix_table.h"
+
+#include "kernel_launch.h"
+
+#include "function_pool.h"
+#include "ref_cpu.h"
+
+#include "real2complex.h"
 
 #ifdef TMP_DEBUG
 #include "rocfft_hip.h"
