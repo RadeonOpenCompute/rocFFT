@@ -1,9 +1,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <cstdio>
 #include <vector>
 
 #include <hip/hip_runtime_api.h>
