@@ -1,4 +1,3 @@
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -12,7 +11,7 @@
 
 int main()
 {
-    // For size N <= 4096
+    // The problem size
     const size_t N = 8;
 
     std::cout << "Complex 1d in-place FFT example\n";
@@ -31,21 +30,16 @@ int main()
     }
     std::cout << "\n";
 
-    // rocfft gpu compute
-    // ========================================
-
     rocfft_setup();
-
-    size_t Nbytes = N * sizeof(float);
 
     // Create HIP device objects:
     float* x;
-    hipMalloc(&x, Nbytes);
+    hipMalloc(&x, cx.size() * sizeof(decltype(cx)::value_type));
     float2* y;
     hipMalloc(&y, (N / 2 + 1) * sizeof(float));
 
     //  Copy data to device
-    hipMemcpy(x, cx.data(), Nbytes, hipMemcpyHostToDevice);
+    hipMemcpy(x, cx.data(), cx.size() * sizeof(decltype(cx)::value_type), hipMemcpyHostToDevice);
 
     // Create plans
     rocfft_plan forward = NULL;
@@ -58,25 +52,25 @@ int main()
                        1, // Number of transforms
                        NULL); // Description
 
+    // The real-to-complex transform uses work memory, which is passed
+    // via a rocfft_execution_info struct.
     rocfft_execution_info fftinfo;
     rocfft_execution_info_create(&fftinfo);
-
-    size_t wbuffersize = sizeof(float) * 2 * N;
-    void*  wbuffer;
+    size_t wbuffersize = 0;
+    rocfft_plan_get_work_buffer_size(forward, &wbuffersize);
+    void* wbuffer;
     hipMalloc(&wbuffer, wbuffersize);
     rocfft_execution_info_set_work_buffer(fftinfo, wbuffer, wbuffersize);
 
     // Execute the forward transform
-    rocfft_execute(forward,
+    rocfft_execute(forward, // plan
                    (void**)&x, // in_buffer
                    (void**)&y, // out_buffer
                    fftinfo); // execution info
 
-    // Copy result back to host
-    std::vector<float2> cy(N / 2 + 1);
-    hipMemcpy(cy.data(), y, cy.size() * sizeof(float), hipMemcpyDeviceToHost);
-
     std::cout << "Transformed:\n";
+    std::vector<float2> cy(N / 2 + 1);
+    hipMemcpy(cy.data(), y, cy.size() * sizeof(decltype(cy)::value_type), hipMemcpyDeviceToHost);
     for(size_t i = 0; i < cy.size(); i++)
     {
         std::cout << "( " << cy[i].x << "," << cy[i].y << ") ";
@@ -95,16 +89,15 @@ int main()
                        NULL); // Description
 
     // Execute the backward transform
-    rocfft_execute(backward,
+    rocfft_execute(backward, // plan
                    (void**)&y, // in_buffer
                    (void**)&x, // out_buffer
                    fftinfo); // execution info
 
-    // Copy result back to host
-    std::vector<float> backx(N);
-    hipMemcpy(backx.data(), x, backx.size() * sizeof(float), hipMemcpyDeviceToHost);
-
     std::cout << "Transformed back:\n";
+    std::vector<float> backx(N);
+    hipMemcpy(
+        backx.data(), x, backx.size() * sizeof(decltype(backx)::value_type), hipMemcpyDeviceToHost);
     for(size_t i = 0; i < backx.size(); i++)
     {
         std::cout << backx[i] << "  ";
@@ -126,6 +119,7 @@ int main()
 
     hipFree(x);
     hipFree(y);
+    hipFree(wbuffer);
 
     // Destroy plans
     rocfft_plan_destroy(forward);
