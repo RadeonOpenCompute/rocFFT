@@ -23,14 +23,12 @@ DisableFormat:   false
 Standard: Cpp11
 
 AccessModifierOffset: -4
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: true
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
-AlignEscapedNewlines: Left
+AlignEscapedNewlinesLeft: true
 AlignOperands:   true
 AlignTrailingComments: false
-AllowAllArgumentsOnNextLine: true
-AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
@@ -48,7 +46,6 @@ BinPackParameters: false
 BreakBeforeBraces: Custom
 # Control of individual brace wrapping cases
 BraceWrapping: {
-    AfterCaseLabel: 'true'
     AfterClass: 'true'
     AfterControlStatement: 'true'
     AfterEnum : 'true'
@@ -80,7 +77,6 @@ DerivePointerAlignment: false
 ExperimentalAutoDetectBinPacking: false
 ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
 IndentCaseLabels: false
-IndentPPDirectives: None
 #FixNamespaceComments: true
 IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: true
@@ -120,4 +116,5 @@ SortIncludes: true
 ReflowComments: false
 
 #IncludeBlocks: Preserve
+#IndentPPDirectives: AfterHash
 ---
