@@ -115,7 +115,7 @@ rocFFTCI:
         }
         else if(platform.jenkinsLabel.contains('hip-clang'))
         {
-            platform.runCommand(this, null)
+            packageCommand = null
         }
         else
         {
