@@ -32,7 +32,7 @@ rocFFTCI:
 
     def rocfft = new rocProject('rocfft')
     // customize for project
-    rocfft.paths.build_command = './install.sh -cd'
+    rocfft.paths.build_command = './install.sh -c'
 
     // Define test architectures, optional rocm version argument is available
     def nodes = new dockerNodes(['gfx906 && centos7', 'gfx900'], rocfft)
@@ -44,12 +44,24 @@ rocFFTCI:
         platform, project->
 
         project.paths.construct_build_prefix()
-        def command = """#!/usr/bin/env bash
-                  set -x
-                  cd ${project.paths.project_build_prefix}
-                  LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=${project.compiler.compiler_path} ${project.paths.build_command}
-                """
+        def command
 
+        if(platform.jenkinsLabel.contains('centos'))
+        {
+            command = """#!/usr/bin/env bash
+                    set -x
+                    cd ${project.paths.project_build_prefix}
+                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=${project.compiler.compiler_path} sudo ${project.paths.build_command}d
+                    """
+        }
+        else
+        {
+            command = """#!/usr/bin/env bash
+                    set -x
+                    cd ${project.paths.project_build_prefix}
+                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=${project.compiler.compiler_path} ${project.paths.build_command}
+                    """
+        }
         platform.runCommand(this, command)
     }
 
