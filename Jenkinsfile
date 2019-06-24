@@ -117,7 +117,7 @@ rocFFTCI:
             command = """
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
-                    make package
+                    sudo make package
                     rm -rf package && mkdir -p package
                     mv *.deb package/
                     dpkg -c package/*.deb
