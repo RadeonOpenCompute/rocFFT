@@ -32,7 +32,7 @@ rocFFTCI:
 
     def rocfft = new rocProject('rocfft')
     // customize for project
-    rocfft.paths.build_command = './install.sh'
+    rocfft.paths.build_command = './install.sh -c'
 
     // Define test architectures, optional rocm version argument is available
     def nodes = new dockerNodes(['gfx906 && centos7', 'gfx900 && ubuntu', 'gfx906 && hip-clang'], rocfft)
@@ -60,7 +60,7 @@ rocFFTCI:
             command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command} -c
+                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
                 """
         }
         platform.runCommand(this, command)
