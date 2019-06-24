@@ -19,8 +19,6 @@ RUN yum install -y \
     clang-devel \
     gcc-c++ \
     gcc-gfortran \
-    gtest-devel \
-    gtest \
     lapack \
     lapack-devel \
     lapack-static \
