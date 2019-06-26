@@ -51,7 +51,7 @@ rocFFTCI:
             command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=${project.compiler.compiler_path} sudo ${project.paths.build_command}d
+                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=${project.compiler.compiler_path} sudo ${project.paths.build_command}id
                     """
         }
         else
@@ -103,7 +103,6 @@ rocFFTCI:
             command = """
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
-                    sudo make package
                     rm -rf package && mkdir -p package
                     mv *.rpm package/
                     rpm -qlp package/*.rpm
