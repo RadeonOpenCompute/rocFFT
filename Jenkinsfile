@@ -103,9 +103,9 @@ rocFFTCI:
             command = """
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
-                    rm -rf package && mkdir -p package
-                    mv *.rpm package/
-                    rpm -qlp package/*.rpm
+                    sudo rm -rf package && sudo mkdir -p package
+                    sudo mv *.rpm package/
+                    sudo rpm -qlp package/*.rpm
                 """
 
             platform.runCommand(this, command)
