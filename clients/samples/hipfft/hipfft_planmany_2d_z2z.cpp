@@ -27,9 +27,8 @@
 
 int main()
 {
-    ///------------------------------------------------------------------------
-    /// 2d Z2Z forward hipfftPlanMany explicit params
-
+    std::cout << "2D double-precision complex-to-complex transform using advanced interface\n";
+    
     int rank    = 2;
     int n[2]    = {4, 5};
     int howmany = 3;

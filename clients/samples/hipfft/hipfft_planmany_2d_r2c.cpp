@@ -6,6 +6,8 @@
 
 int main()
 {
+    std::cout << "2D double-precision real-to-complex transform using advanced interface\n";
+    
     int rank    = 2;
     int n[2]    = {4, 5};
     int howmany = 3; // batch size
