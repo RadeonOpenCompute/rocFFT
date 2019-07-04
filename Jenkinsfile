@@ -48,15 +48,7 @@ rocFFTCI:
         
         def command 
         
-        if(platform.jenkinsLabel.contains('centos'))
-        {
-            command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc sudo ${project.paths.build_command}id
-                """
-        }
-        else if(platform.jenkinsLabel.contains('hip-clang'))
+        if(platform.jenkinsLabel.contains('hip-clang'))
         {
             command = """#!/usr/bin/env bash
                     set -x
@@ -113,9 +105,9 @@ rocFFTCI:
             command = """
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
-                    sudo rm -rf package && sudo mkdir -p package
-                    sudo mv *.rpm package/
-                    sudo rpm -qlp package/*.rpm
+                    rm -rf package && sudo mkdir -p package
+                    mv *.rpm package/
+                    rpm -qlp package/*.rpm
                 """
 
             platform.runCommand(this, command)
