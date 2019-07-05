@@ -105,7 +105,7 @@ rocFFTCI:
             command = """
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
-                    rm -rf package && sudo mkdir -p package
+                    rm -rf package && mkdir -p package
                     mv *.rpm package/
                     rpm -qlp package/*.rpm
                 """
