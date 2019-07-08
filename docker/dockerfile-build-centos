@@ -32,8 +32,6 @@ RUN yum install -y \
     numactl-libs \
     rpm-build
 
-#RUN echo 'scl enable devtoolset-7 bash' >>/etc/skel/.bashrc
-
 RUN echo '#!/bin/bash' | tee /etc/profile.d/devtoolset7.sh && echo \
     'source scl_source enable devtoolset-7' >>/etc/profile.d/devtoolset7.sh
 
@@ -51,6 +49,6 @@ ARG ROCFFT_SRC_ROOT=/usr/local/src/rocFFT
 RUN mkdir -p ${ROCFFT_SRC_ROOT} && cd ${ROCFFT_SRC_ROOT} && \
     git clone -b develop --depth=1 https://github.com/ROCmSoftwarePlatform/rocFFT . && \
     mkdir -p build/deps && cd build/deps && \
-    cmake -DBUILD_BOOST=OFF ${ROCFFT_SRC_ROOT}/deps && \
+    cmake3 -DBUILD_BOOST=OFF ${ROCFFT_SRC_ROOT}/deps && \
     make -j $(nproc) install && \
     rm -rf ${ROCFFT_SRC_ROOT}
