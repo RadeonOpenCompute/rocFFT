@@ -30,7 +30,7 @@ import java.nio.file.Path;
 rocFFTCI:
 {
 
-    def rocfft = new rocProject('rocfft')
+    def rocfft = new rocProject('rocFFT')
     // customize for project
     rocfft.paths.build_command = './install.sh -c'
 
@@ -64,6 +64,7 @@ rocFFTCI:
                     LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
                 """
         }
+        
         platform.runCommand(this, command)
     }
 
@@ -105,6 +106,7 @@ rocFFTCI:
             command = """
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
+                    make package
                     rm -rf package && mkdir -p package
                     mv *.rpm package/
                     rpm -qlp package/*.rpm
