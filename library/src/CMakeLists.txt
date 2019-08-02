@@ -105,7 +105,7 @@ target_include_directories( rocfft
           $<INSTALL_INTERFACE:include>
 )
 
-rocm_set_soversion( LIBRARY_TARGET rocfft SOVERSION ${rocfft_SOVERSION} )
+rocm_set_soversion( rocfft ${rocfft_SOVERSION} )
 set_target_properties( rocfft PROPERTIES CXX_EXTENSIONS NO )
 set_target_properties( rocfft PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 set_target_properties( rocfft PROPERTIES DEBUG_POSTFIX "-d" )
