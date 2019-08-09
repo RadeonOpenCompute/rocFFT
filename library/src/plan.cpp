@@ -695,7 +695,7 @@ ROCFFT_EXPORT rocfft_status rocfft_get_version_string(char* buf, const size_t le
 void TreeNode::BuildRealEven()
 {
     // Fastet moving dimension must be even:
-    assert(length[dimension0] % 2 == 0);
+    assert(length[dimension - 1] % 2 == 0);
 
     scheme = CS_REAL_TRANSFORM_EVEN;
 
@@ -757,8 +757,6 @@ void TreeNode::BuildRealEven()
 	prePlan->length       = {length[0] / 2};
 	prePlan->batch        = std::accumulate(length.begin() + 1, length.end(),
 						 1, std::multiplies<size_t>());
-	prePlan->iDist = length[dimension - 1];
-	prePlan->oDist = length[dimension - 1];
 	prePlan->inArrayType  = rocfft_array_type_hermitian_interleaved;
 	prePlan->outArrayType = rocfft_array_type_complex_interleaved;
 
@@ -2151,9 +2149,9 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
             TreeNode* prePlan = childNodes[0];
             assert(prePlan->scheme == CS_KERNEL_CMPLX_TO_R);
             prePlan->inStride  = {inStride[0]};
-            prePlan->iDist     = iDist;
+            prePlan->iDist     = length[0] + 1;
             prePlan->outStride = {outStride[0]};
-            prePlan->oDist     = oDist / 2;
+            prePlan->oDist     = length[0]; // FIXME: placeness?
             assert(prePlan->length.size() == prePlan->inStride.size());
             assert(prePlan->length.size() == prePlan->outStride.size());
 
@@ -2706,8 +2704,8 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
             padding = 64;
 
         // B -> B
-        assert((row1Plan->obOut == OB_USER_OUT) || (row1Plan->obOut == OB_TEMP_CMPLX_FOR_REAL)
-               || (row1Plan->obOut == OB_TEMP_BLUESTEIN));
+        // assert((row1Plan->obOut == OB_USER_OUT) || (row1Plan->obOut == OB_TEMP_CMPLX_FOR_REAL)
+        //        || (row1Plan->obOut == OB_TEMP_BLUESTEIN));
         row1Plan->inStride = inStride;
         row1Plan->iDist    = iDist;
 
@@ -2742,8 +2740,8 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
         row2Plan->TraverseTreeAssignParamsLogicA();
 
         // T -> B
-        assert((trans2Plan->obOut == OB_USER_OUT) || (trans2Plan->obOut == OB_TEMP_CMPLX_FOR_REAL)
-               || (trans2Plan->obOut == OB_TEMP_BLUESTEIN));
+        // assert((trans2Plan->obOut == OB_USER_OUT) || (trans2Plan->obOut == OB_TEMP_CMPLX_FOR_REAL)
+        //        || (trans2Plan->obOut == OB_TEMP_BLUESTEIN));
         trans2Plan->inStride = row2Plan->outStride;
         trans2Plan->iDist    = row2Plan->oDist;
 
@@ -2758,8 +2756,8 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
         TreeNode* colPlan = childNodes[1];
 
         // B -> B
-        assert((rowPlan->obOut == OB_USER_OUT) || (rowPlan->obOut == OB_TEMP_CMPLX_FOR_REAL)
-               || (rowPlan->obOut == OB_TEMP_BLUESTEIN));
+        // assert((rowPlan->obOut == OB_USER_OUT) || (rowPlan->obOut == OB_TEMP_CMPLX_FOR_REAL)
+        //        || (rowPlan->obOut == OB_TEMP_BLUESTEIN));
         rowPlan->inStride = inStride;
         rowPlan->iDist    = iDist;
 
