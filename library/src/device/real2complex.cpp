@@ -448,6 +448,10 @@ void real_1d_pre_post_process(size_t const half_N,
     dim3 grid(blocks, high_dimension, batch);
     dim3 threads(block_size, 1, 1);
 
+    std::cout << input_stride << std::endl;
+
+    std::cout << output_stride << std::endl;
+    
     if(d_input == d_output)
     {
         hipLaunchKernelGGL((real_1d_pre_post_process_kernel<T, true, R2C>),
