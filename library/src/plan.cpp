@@ -26,9 +26,11 @@
 #include "radix_table.h"
 #include "repo.h"
 #include "rocfft.h"
+
 #include <assert.h>
 #include <iostream>
 #include <map>
+#include <numeric>
 #include <sstream>
 #include <vector>
 
@@ -692,11 +694,8 @@ ROCFFT_EXPORT rocfft_status rocfft_get_version_string(char* buf, const size_t le
 
 void TreeNode::BuildRealEven()
 {
-    // TODO: remove when multi-dimensional transforms are implemented
-    assert(dimension == 1);
-
-    // Last dimension must be even:
-    assert(length[dimension - 1] % 2 == 0);
+    // Fastet moving dimension must be even:
+    assert(length[dimension0] % 2 == 0);
 
     scheme = CS_REAL_TRANSFORM_EVEN;
 
@@ -752,26 +751,19 @@ void TreeNode::BuildRealEven()
         assert(outArrayType == rocfft_array_type_real);
         assert(outStride[0] == 1); // assumed contigous for now
 
-        if(dimension == 1)
-        {
-            TreeNode* prePlan     = TreeNode::CreateNode(this);
-            prePlan->scheme       = CS_KERNEL_CMPLX_TO_R;
-            prePlan->dimension    = 1;
-            prePlan->length       = {length[0] / 2};
-            prePlan->inArrayType  = rocfft_array_type_hermitian_interleaved;
-            prePlan->outArrayType = rocfft_array_type_complex_interleaved;
+	TreeNode* prePlan     = TreeNode::CreateNode(this);
+	prePlan->scheme       = CS_KERNEL_CMPLX_TO_R;
+	prePlan->dimension    = 1;
+	prePlan->length       = {length[0] / 2};
+	prePlan->batch        = std::accumulate(length.begin() + 1, length.end(),
+						 1, std::multiplies<size_t>());
+	prePlan->iDist = length[dimension - 1];
+	prePlan->oDist = length[dimension - 1];
+	prePlan->inArrayType  = rocfft_array_type_hermitian_interleaved;
+	prePlan->outArrayType = rocfft_array_type_complex_interleaved;
 
-            childNodes.push_back(prePlan);
-        }
-        else
-        {
-            // TODO: change the batch of the prePlan so that we do the
-            // all of the x-rows in one batch of prePlan, and then
-            // push_back one prePlan for (batch) times.  Setting up
-            // parameters correctly, of course.
-            assert(false);
-        }
-
+	childNodes.push_back(prePlan);
+	    
         // cfftPlan works in-place on the output buffer.
         // NB: the output buffer is real, but we treat it as complex
         cfftPlan->obIn = obOut;
@@ -817,7 +809,11 @@ void TreeNode::BuildRealEmbed()
 
 void TreeNode::BuildReal()
 {
-    if(inStride[0] == 1 && outStride[0] == 1 && length[0] % 2 == 0 && dimension == 1)
+  //FIXME: all data must be contiguous, in fact.
+  if(inStride[0] == 1
+     && outStride[0] == 1
+     && length[0] % 2 == 0
+     && (dimension == 1 || direction == 1))
     {
         BuildRealEven();
     }
