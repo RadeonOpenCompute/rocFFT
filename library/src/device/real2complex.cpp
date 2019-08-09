@@ -24,7 +24,9 @@
 #include "kernel_launch.h"
 #include "rocfft.h"
 #include "rocfft_hip.h"
+
 #include <iostream>
+#include <numeric>
 
 template <typename T>
 __global__ void real2complex_kernel(size_t          input_size,
