@@ -90,7 +90,7 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR HIP_PLATFORM STREQUAL "hip-clang")
   target_compile_options( rocfft PRIVATE -Wno-unused-command-line-argument )
 
   foreach( target ${AMDGPU_TARGETS} )
-    target_link_libraries( rocfft PRIVATE --amdgpu-target=${target} )
+    target_compile_options( rocfft PRIVATE --amdgpu-target=${target} )
   endforeach( )
 else( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
   cuda_find_samples_inc_dir( cuda_samples_inc_dir )
