@@ -40,8 +40,7 @@
 #define VERSION_STRING (TO_STR(rocfft_version_major) "." \
                         TO_STR(rocfft_version_minor) "." \
                         TO_STR(rocfft_version_patch) "." \
-                        TO_STR(rocfft_version_tweak) "-" \
-			TO_STR(rocfft_version_commit_id))
+                        TO_STR(rocfft_version_tweak) )
 
 std::string PrintScheme(ComputeScheme cs)
 {
@@ -1592,7 +1591,15 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer& flipIn,
         size_t cs = childNodes[1]->childNodes.size();
         if(cs)
         {
-            assert(childNodes[1]->childNodes[0]->obIn == OB_TEMP_CMPLX_FOR_REAL);
+            if(childNodes[1]->scheme == CS_BLUESTEIN)
+            {
+                assert(childNodes[1]->childNodes[0]->obIn == OB_TEMP_BLUESTEIN);
+                assert(childNodes[1]->childNodes[1]->obIn == OB_TEMP_CMPLX_FOR_REAL);
+            }
+            else
+            {
+                assert(childNodes[1]->childNodes[0]->obIn == OB_TEMP_CMPLX_FOR_REAL);
+            }
             assert(childNodes[1]->childNodes[cs - 1]->obOut == OB_TEMP_CMPLX_FOR_REAL);
         }
 
@@ -1657,6 +1664,8 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer& flipIn,
     break;
     case CS_BLUESTEIN:
     {
+        assert(childNodes.size() == 7);
+
         OperatingBuffer savFlipIn  = flipIn;
         OperatingBuffer savFlipOut = flipOut;
         OperatingBuffer savOutBuf  = obOutBuf;
@@ -1665,19 +1674,21 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer& flipIn,
         flipOut  = OB_TEMP;
         obOutBuf = OB_TEMP_BLUESTEIN;
 
-        obIn  = (parent == nullptr) ? OB_USER_IN : savFlipIn;
-        obOut = (parent == nullptr)
-                    ? (placement == rocfft_placement_inplace) ? OB_USER_IN : OB_USER_OUT
-                    : savOutBuf;
-
-        assert(childNodes.size() == 7);
-
         assert(childNodes[0]->scheme == CS_KERNEL_CHIRP);
-        childNodes[0]->obIn  = obIn;
+        childNodes[0]->obIn  = OB_TEMP_BLUESTEIN;
         childNodes[0]->obOut = OB_TEMP_BLUESTEIN;
 
         assert(childNodes[1]->scheme == CS_KERNEL_PAD_MUL);
-        childNodes[1]->obIn  = OB_TEMP_BLUESTEIN;
+        if(parent == nullptr)
+        {
+            childNodes[1]->obIn
+                = (placement == rocfft_placement_inplace) ? OB_USER_OUT : OB_USER_IN;
+        }
+        else
+        {
+            childNodes[1]->obIn = obIn;
+        }
+
         childNodes[1]->obOut = OB_TEMP_BLUESTEIN;
 
         childNodes[2]->obIn  = OB_TEMP_BLUESTEIN;
@@ -1698,7 +1709,10 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer& flipIn,
 
         assert(childNodes[6]->scheme == CS_KERNEL_RES_MUL);
         childNodes[6]->obIn  = OB_TEMP_BLUESTEIN;
-        childNodes[6]->obOut = obOut;
+        childNodes[6]->obOut = (parent == nullptr) ? OB_USER_OUT : obOut;
+
+        obIn  = childNodes[1]->obIn;
+        obOut = childNodes[6]->obOut;
 
         flipIn   = savFlipIn;
         flipOut  = savFlipOut;
@@ -1986,6 +2000,13 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer& flipIn,
     // Assert that the kernel chain is connected
     for(int i = 1; i < childNodes.size(); ++i)
     {
+        if(childNodes[i - 1]->scheme == CS_KERNEL_CHIRP)
+        {
+            // The Bluestein algorithm uses a separate buffer which is
+            // convoluted with the input; the chain assumption isn't true here.
+            // NB: we assume that the CS_KERNEL_CHIRP is first in the chain.
+            continue;
+        }
         assert(childNodes[i - 1]->obOut == childNodes[i]->obIn);
     }
 }
@@ -2290,7 +2311,9 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
         }
         else
         {
-            assert((row1Plan->obOut == OB_USER_OUT) || (row1Plan->obOut == OB_TEMP_CMPLX_FOR_REAL)
+            // TODO: add documentation for assert.
+            assert((row1Plan->obOut == OB_USER_IN) || (row1Plan->obOut == OB_USER_OUT)
+                   || (row1Plan->obOut == OB_TEMP_CMPLX_FOR_REAL)
                    || (row1Plan->obOut == OB_TEMP_BLUESTEIN));
 
             row1Plan->outStride.push_back(outStride[0]);
@@ -2455,7 +2478,8 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
             // here we don't have B info right away, we get it through its parent
 
             // TODO: what is this assert for?
-            assert(parent->obOut == OB_USER_OUT || parent->obOut == OB_TEMP_CMPLX_FOR_REAL
+            assert(parent->obOut == OB_USER_IN || parent->obOut == OB_USER_OUT
+                   || parent->obOut == OB_TEMP_CMPLX_FOR_REAL
                    || parent->scheme == CS_REAL_TRANSFORM_EVEN);
 
             // T-> B
