@@ -103,7 +103,7 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR HIP_PLATFORM STREQUAL "hip-clang")
   target_compile_options( rocfft-device PRIVATE -Wno-unused-command-line-argument )
 
   foreach( target ${AMDGPU_TARGETS} )
-    target_link_libraries( rocfft-device PRIVATE --amdgpu-target=${target} )
+    target_compile_options( rocfft-device PRIVATE --amdgpu-target=${target} )
   endforeach( )
 endif( )
 
