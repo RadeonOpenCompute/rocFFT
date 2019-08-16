@@ -124,11 +124,11 @@ rocFFTCI:
             command = """
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
-                    sudo make package
-                    rm -rf package && sudo mkdir -p package
-                    sudo mv *.deb package/
-		    sudo make package_clients
- 		    sudo mv clients/*.deb package                   
+                    make package
+                    rm -rf package && mkdir -p package
+                    mv *.deb package/
+		    make package_clients
+ 		    mv clients/*.deb package                   
                 """
 
             platform.runCommand(this, command)
