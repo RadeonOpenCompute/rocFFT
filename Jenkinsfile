@@ -109,7 +109,6 @@ rocFFTCI:
                     rm -rf package && mkdir -p package
                     mv *.rpm package/
                     rpm -qlp package/*.rpm
-
                 """
 
             platform.runCommand(this, command)
