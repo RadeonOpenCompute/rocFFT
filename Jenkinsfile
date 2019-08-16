@@ -109,6 +109,7 @@ rocFFTCI:
                     rm -rf package && mkdir -p package
                     mv *.rpm package/
                     rpm -qlp package/*.rpm
+
                 """
 
             platform.runCommand(this, command)
@@ -126,7 +127,8 @@ rocFFTCI:
                     make package
                     rm -rf package && mkdir -p package
                     mv *.deb package/
-                    dpkg -c package/*.deb
+		    make package_clients
+ 		    mv clients/*.deb package                   
                 """
 
             platform.runCommand(this, command)
