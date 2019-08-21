@@ -75,7 +75,7 @@ list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 # This tells cmake to create a compile_commands.json file that can be used with clang tooling or vim
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
-set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG ${CMAKE_CXX_FLAGS_DEBUG} -DHIP_ENABLE_PRINTF")
 if (BUILD_CPUREF)
   set(CMAKE_CXX_FLAGS_DEBUG "-DREF_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 endif()
