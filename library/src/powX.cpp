@@ -285,6 +285,7 @@ void TransformPowX(const ExecPlan&       execPlan,
         size_t in_size       = data.node->iDist * data.node->batch;
         size_t in_size_bytes = in_size * 2 * sizeof(float);
         void*  dbg_in        = malloc(in_size_bytes);
+        hipDeviceSynchronize();
         hipMemcpy(dbg_in, data.bufIn[0], in_size_bytes, hipMemcpyDeviceToHost);
 
         size_t out_size       = data.node->oDist * data.node->batch;
@@ -293,6 +294,7 @@ void TransformPowX(const ExecPlan&       execPlan,
         memset(dbg_out, 0x40, out_size_bytes);
         if(data.node->placement != rocfft_placement_inplace)
         {
+            hipDeviceSynchronize();
             hipMemcpy(data.bufOut[0], dbg_out, out_size_bytes, hipMemcpyHostToDevice);
         }
         std::cout << "attempting kernel: " << i << std::endl;

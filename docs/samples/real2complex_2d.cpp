@@ -31,32 +31,37 @@
 
 #include "rocfft.h"
 
-int main()
+int main(int argc, char* argv[])
 {
-    // The problem size
-    const size_t Nx = 8;
-    const size_t Ny = 8;
+    std::cout << "Real/complex 2d FFT example\n";
 
+    // The problem size
+    const size_t Nx = (argc < 2) ? 8 : atoi(argv[1]);
+    const size_t Ny = (argc < 3) ? 8 : atoi(argv[2]);
+    const bool inplace = (argc < 4) ? true : atoi(argv[3]);
+    
+    std::cout << "Nx: " << Nx << "\tNy: " << Ny << "\tin-place: " << inplace << std::endl;
+    
     const size_t Nycomplex = Ny / 2 + 1;
 
-    std::cout << "Real/complex 2d in-place FFT example\n";
-
+    const size_t Nystride = inplace ? 2 * Nycomplex : Ny;
+    
     // Initialize data on the host
-    std::vector<float> cx(Nx * Ny);
+    std::cout << "Input:\n";
+    std::vector<float> cx(Nx * Nystride);
+    std::fill(cx.begin(), cx.end(), 0.0);
     for(size_t i = 0; i < Nx; i++)
     {
         for(size_t j = 0; j < Ny; j++)
         {
-            cx[i * Ny + j] = i + j;
+            cx[i * Nystride + j] = i + j;
         }
     }
-
-    std::cout << "Input:\n";
     for(size_t i = 0; i < Nx; i++)
     {
-        for(size_t j = 0; j < Ny; j++)
+        for(size_t j = 0; j < Nystride; j++)
         {
-            std::cout << cx[i * Ny + j] << "  ";
+            std::cout << cx[i * Nystride + j] << "  ";
         }
         std::cout << "\n";
     }
@@ -68,20 +73,23 @@ int main()
     rocfft_setup();
 
     // Create HIP device objects:
-    float* x;
+    float* x = NULL;
     hipMalloc(&x, cx.size() * sizeof(decltype(cx)::value_type));
-    float2* y;
-    hipMalloc(&y, cy.size() * sizeof(decltype(cy)::value_type));
+    float2* y = inplace ? (float2*)x : NULL;
+    if(!inplace)
+    {
+        hipMalloc(&y, cy.size() * sizeof(decltype(cy)::value_type));
+    }
 
     //  Copy data to device
     hipMemcpy(x, cx.data(), cx.size() * sizeof(decltype(cx)::value_type), hipMemcpyHostToDevice);
 
-    const size_t lengths[2] = {Nx, Ny};
+    const size_t lengths[2] = {Ny, Nx};
 
     // Create plans
     rocfft_plan forward = NULL;
     rocfft_plan_create(&forward,
-                       rocfft_placement_notinplace,
+                       inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
                        rocfft_transform_type_real_forward,
                        rocfft_precision_single,
                        2, // Dimensions
@@ -91,19 +99,19 @@ int main()
 
     // The real-to-complex transform uses work memory, which is passed
     // via a rocfft_execution_info struct.
-    rocfft_execution_info fftinfo;
-    rocfft_execution_info_create(&fftinfo);
-    size_t wbuffersize = 0;
-    rocfft_plan_get_work_buffer_size(forward, &wbuffersize);
-    void* wbuffer;
-    hipMalloc(&wbuffer, wbuffersize);
-    rocfft_execution_info_set_work_buffer(fftinfo, wbuffer, wbuffersize);
+    rocfft_execution_info forwardinfo;
+    rocfft_execution_info_create(&forwardinfo);
+    size_t forwardworkbuffersize = 0;
+    rocfft_plan_get_work_buffer_size(forward, &forwardworkbuffersize);
+    void* forwardwbuffer = NULL;
+    hipMalloc(&forwardwbuffer, forwardworkbuffersize);
+    rocfft_execution_info_set_work_buffer(forwardinfo, forwardwbuffer, forwardworkbuffersize);
 
     // Execute the forward transform
     rocfft_execute(forward, // plan
                    (void**)&x, // in_buffer
                    (void**)&y, // out_buffer
-                   fftinfo); // execution info
+                   forwardinfo); // execution info
 
     std::cout << "Transformed:\n";
 
@@ -122,7 +130,7 @@ int main()
     // Create plans
     rocfft_plan backward = NULL;
     rocfft_plan_create(&backward,
-                       rocfft_placement_notinplace,
+                       inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
                        rocfft_transform_type_real_inverse,
                        rocfft_precision_single,
                        2, // Dimensions
@@ -130,21 +138,34 @@ int main()
                        1, // Number of transforms
                        NULL); // Description
 
+
+    // The real-to-complex transform uses work memory, which is passed
+    // via a rocfft_execution_info struct.
+    rocfft_execution_info backwardinfo;
+    rocfft_execution_info_create(&backwardinfo);
+    size_t backwardworkbuffersize = 0;
+    rocfft_plan_get_work_buffer_size(backward, &backwardworkbuffersize);
+    void* backwardwbuffer = NULL;
+    hipMalloc(&backwardwbuffer, backwardworkbuffersize);
+    rocfft_execution_info_set_work_buffer(backwardinfo, backwardwbuffer, backwardworkbuffersize);
+
+    
     // Execute the backward transform
     rocfft_execute(backward, // plan
                    (void**)&y, // in_buffer
                    (void**)&x, // out_buffer
-                   fftinfo); // execution info
+                   backwardinfo); // execution info
 
     std::cout << "Transformed back:\n";
     std::vector<float> backx(cx.size());
+    std::fill(backx.begin(), backx.end(), 0.0);
     hipMemcpy(
         backx.data(), x, backx.size() * sizeof(decltype(backx)::value_type), hipMemcpyDeviceToHost);
     for(size_t i = 0; i < Nx; i++)
     {
-        for(size_t j = 0; j < Nycomplex; ++j)
+        for(size_t j = 0; j < Nystride; ++j)
         {
-            const size_t pos = i * Ny + j;
+            const size_t pos = i * Nystride + j;
             std::cout << backx[pos] << "  ";
         }
         std::cout << "\n";
@@ -165,8 +186,11 @@ int main()
     std::cout << "Maximum error: " << error << "\n";
 
     hipFree(x);
-    hipFree(y);
-    hipFree(wbuffer);
+    if(!inplace) {
+        hipFree(y);
+    }
+    hipFree(forwardwbuffer);
+    hipFree(backwardwbuffer);
 
     // Destroy plans
     rocfft_plan_destroy(forward);

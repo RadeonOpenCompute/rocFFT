@@ -237,11 +237,17 @@ class RefLibOp
             in_typesize = sizeof(std::complex<float>);
             break;
         case CS_KERNEL_CMPLX_TO_R:
-            insize       = batch * (data->node->length[0] + 1);
-            outsize      = batch * data->node->length[0];
+        {
+            size_t extradim = std::accumulate(data->node->length.begin() + 1,
+                                              data->node->length.end(), 1,
+                                              std::multiplies<size_t>());
+            insize       = batch * (data->node->length[0] + 1) * extradim;
+            outsize      = batch * data->node->length[0] * extradim;
+            std::cout << "insize: " << insize << "\toutsize: " << outsize << std::endl;
             in_typesize  = sizeof(std::complex<float>);
             out_typesize = sizeof(std::complex<float>);
             break;
+        }
         default:
             insize  = std::accumulate(data->node->length.begin(),
                                      data->node->length.end(),
@@ -260,16 +266,6 @@ class RefLibOp
         memset(fftwin.data, 0x40, fftwin.bufsize());
         memset(fftwout.data, 0x40, fftwout.bufsize());
         memset(libout.data, 0x40, libout.bufsize());
-
-#if 0
-        // Initialize the code to some known value to help debug the
-        // cpu reference implementation.
-        std::complex<float>* input = (std::complex<float>*)fftwin.data;
-        for(int r = 0; r < fftwin.size; ++r)
-        {
-            input[r] = std::complex<float>(r + 0.5, r * r + 3);
-        }
-#endif
     }
 
     // Copy a host vector to a host vector, taking strides and other
@@ -480,9 +476,10 @@ class RefLibOp
                 = (ftype_fftwf_destroy_plan)dlsym(refHandle.fftw3f_lib, "fftwf_destroy_plan");
 
             int n[1]    = {static_cast<int>(data->node->length[0])};
-            int howmany = data->node->batch;
-            for(size_t i = 1; i < data->node->length.size(); i++)
-                howmany *= data->node->length[i];
+            int howmany = std::accumulate(data->node->length.begin() + 1,
+                                          data->node->length.end(),
+                                          data->node->batch,
+                                          std::multiplies<size_t>());
 
             void* p = local_fftwf_plan_many_dft(1,
                                                 n,
@@ -679,6 +676,9 @@ class RefLibOp
             assert(fftwin.size == batch * halfN);
             assert(fftwout.size == batch * (halfN + 1));
 
+            hipMemcpy(fftwin.data, data->bufIn[0], fftwin.size * fftwin.typesize,
+                      hipMemcpyDeviceToHost);
+            
             const auto           input  = (std::complex<float>*)fftwin.data;
             std::complex<float>* output = (std::complex<float>*)fftwout.data;
 
@@ -713,11 +713,21 @@ class RefLibOp
             const size_t halfN = data->node->length[0];
             const size_t batch = data->node->batch;
 
-            assert(fftwin.size == batch * (halfN + 1));
-            assert(fftwout.size == batch * halfN);
+            // assert(fftwin.size == batch * (halfN + 1));
+            // assert(fftwout.size == batch * halfN);
             assert(fftwin.typesize == sizeof(std::complex<float>));
             assert(fftwout.typesize == sizeof(std::complex<float>));
 
+            size_t extradim = std::accumulate(data->node->length.begin() + 1,
+                                              data->node->length.end(), 1,
+                                              std::multiplies<size_t>());
+
+            
+            hipDeviceSynchronize();
+            
+            hipMemcpy(fftwin.data, data->bufIn[0], fftwin.size * fftwin.typesize,
+                      hipMemcpyDeviceToHost);
+            
             const std::complex<float>* input  = (std::complex<float>*)fftwin.data;
             std::complex<float>*       output = (std::complex<float>*)fftwout.data;
 
@@ -725,17 +735,39 @@ class RefLibOp
             const std::complex<float> I(0, 1);
             const std::complex<float> one(1, 0);
 
+            std::cout << "input:" << std::endl;
+            for(int i = 0; i < fftwin.size; ++i) {
+                std::cout << input[i] << std::endl;
+            }
+            
             for(int ibatch = 0; ibatch < batch; ++ibatch)
             {
-                const auto bin  = input + ibatch * (halfN + 1);
-                auto       bout = output + ibatch * halfN;
-                for(int r = 0; r < halfN; ++r)
+                for(int idim = 0; idim < extradim; ++idim)
                 {
-                    const auto omegaNr = std::exp(std::complex<float>(0, 2.0 * M_PI * r * overN));
-                    bout[r]
-                        = bin[r] * (one + I * omegaNr) + conj(bin[halfN - r]) * (one - I * omegaNr);
+                    const auto bin  = input + (ibatch * extradim + idim) * (halfN + 1);
+                    auto       bout = output + (ibatch * extradim + idim) * halfN;
+                    for(int r = 0; r < halfN; ++r)
+                    {
+                        std::cout << (ibatch * extradim + idim) * (halfN + 1) + r
+                                  << " , "
+                                  << (ibatch * extradim + idim) * (halfN + 1) + halfN - r
+                                  << " -> "
+                                  << (ibatch * extradim + idim) * halfN + r
+                                  << std::endl;
+                        const auto omegaNr
+                            = std::exp(std::complex<float>(0, 2.0 * M_PI * r * overN));
+                        bout[r]
+                            = bin[r] * (one + I * omegaNr)
+                            + conj(bin[halfN - r]) * (one - I * omegaNr);
+                    }
                 }
             }
+                
+            std::cout << "output:" << std::endl;
+            for(int i = 0; i < fftwout.size; ++i) {
+                std::cout << output[i] << std::endl;
+            }
+
         }
         break;
         case CS_KERNEL_CHIRP:
@@ -874,11 +906,10 @@ public:
     {
         DeviceCallIn* data        = (DeviceCallIn*)data_p;
         size_t        out_size    = (data->node->oDist * data->node->batch);
-        size_t        checklength = data->node->length[0];
-        for(int i = 1; i < data->node->length.size(); ++i)
-        {
-            checklength *= data->node->length[i];
-        }
+        size_t        checklength = std::accumulate(data->node->length.begin(),
+                                                    data->node->length.end(),
+                                                    1,
+                                                    std::multiplies<size_t>());
         void* bufOut = data->bufOut[0];
 
         switch(data->node->scheme)
@@ -901,7 +932,7 @@ public:
             checklength = libout.size / 2 + 1;
             break;
         case CS_KERNEL_CMPLX_TO_R:
-            checklength = libout.size / 2;
+            checklength = libout.size;
             break;
         default:
             break;
@@ -1002,9 +1033,10 @@ public:
         std::cout << "rmse: " << rmse << std::endl << "nrmse: " << nrmse << std::endl;
         std::cout << "---------------------------------------------" << std::endl;
 
-#if 0
+#if 1
         std::complex<float>* in      = (std::complex<float>*)fftwin.data;
-
+        std::cout << "check length: " << checklength << std::endl;
+        
         std::cout << "input:" << std::endl;
         for(size_t i = 0; i < fftwin.size; ++i)
         {
@@ -1014,8 +1046,7 @@ public:
         std::cout << "lib output vs cpu output:" << std::endl;
         for(size_t i = 0; i < libout.size; ++i)
         {
-            std::cout << i << "\t(" << lb[i].real() << "," << lb[i].imag() << ")"
-                      << "\t(" << ot[i].real() << "," << ot[i].imag() << ")\n";
+            std::cout << i << "\t" << lb[i] << "\t" << ot[i] << "\n";
         }
 #endif
     }

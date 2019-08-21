@@ -357,12 +357,10 @@ __global__ void real_1d_pre_post_process_kernel(size_t   half_N,
 
     size_t output_offset = hipBlockIdx_z * output_distance; // batch offset
 
-    input_offset += hipBlockIdx_y * input_stride; // notice for 1D, hipBlockIdx_y
-    // == 0 and thus has no effect
-    // for input_offset
-    output_offset += hipBlockIdx_y * output_stride; // notice for 1D, hipBlockIdx_y == 0 and
-    // thus has no effect for output_offset
-
+    // For 1D, hipBlockIdx_y == 0 and thus has no effect
+    input_offset += hipBlockIdx_y * input_stride; 
+    output_offset += hipBlockIdx_y * output_stride;
+    
     input += input_offset;
     output += output_offset;
 
@@ -394,8 +392,11 @@ __global__ void real_1d_pre_post_process_kernel(size_t   half_N,
         {
             T p             = input[0];
             T q             = input[half_N];
-            output[idx_p].x = p.x + q.x;
-            output[idx_p].y = p.x - q.x;
+            // output[idx_p].x = p.x + q.x;
+            // output[idx_p].y = p.x - q.x;
+            
+            output[idx_p].x = hipBlockIdx_y + 0.5;
+            output[idx_p].y = hipThreadIdx_x + 0.5;
         }
     }
     else if(idx_p <= half_N >> 1)
@@ -417,11 +418,63 @@ __global__ void real_1d_pre_post_process_kernel(size_t   half_N,
             twd_q.x = -twd_q.x;
         }
 
-        output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
-        output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
+        // output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
+        // output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
 
-        output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
-        output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
+        // output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
+        // output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
+        
+        output[idx_p].x = hipBlockIdx_y + 0.5;
+        output[idx_p].y = hipThreadIdx_x + 0.5;
+
+        output[idx_q].x = hipBlockIdx_y + 0.5;
+        output[idx_q].y = hipThreadIdx_x + 0.5;
+    }
+}
+
+
+template <typename T>
+__global__ void real_pre_process_kernel(const size_t   half_N,
+                                        const size_t   input_stride,
+                                        const size_t   output_stride,
+                                        T*       input,
+                                        const size_t   input_distance,
+                                        T*       output,
+                                        const size_t   output_distance,
+                                        T const* twiddles)
+{
+    // blockIdx.z gives the batch offset
+    // blockIdx.y gives the multi-dimensional offset
+    input += blockIdx.z * input_distance + blockIdx.y * input_stride; 
+    output += blockIdx.z * output_distance + blockIdx.y * output_stride;
+
+    const size_t idx_p = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t idx_q = half_N - idx_p;
+
+    if(idx_p <= half_N >> 1)
+    {
+        const T p = input[idx_p];
+        const T q = input[idx_q];
+        
+        if(idx_p == 0)
+        {
+            output[idx_p].x = p.x + q.x;
+            output[idx_p].y = p.x - q.x;
+        }
+        else
+        {
+            const T u(p.x + q.x, p.y - q.y); // p + conj(q)
+            const T v(p.x - q.x, p.y + q.y); // p - conj(q)
+
+            const T twd_p(-twiddles[idx_p].x, twiddles[idx_p].y);
+            const T twd_q(-twiddles[idx_q].x, twiddles[idx_q].y);
+
+            output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
+            output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
+
+            output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
+            output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
+        }
     }
 }
 
@@ -448,29 +501,53 @@ void real_1d_pre_post_process(size_t const half_N,
     dim3 grid(blocks, high_dimension, batch);
     dim3 threads(block_size, 1, 1);
 
-    std::cout << input_stride << std::endl;
-
-    std::cout << output_stride << std::endl;
+    std::cout << __LINE__ << std::endl;
+    std::cout << "high_dimension: " << high_dimension << std::endl;
+    std::cout << "\tinput_stride (actually contig input dist): " << input_stride << std::endl;
+    std::cout << "\toutput_stride (actually contig output dist): " << output_stride << std::endl;
+    std::cout << "batch: " << batch << std::endl;
+    std::cout << "\tinput_distance (for batch): " << input_distance << std::endl;
+    std::cout << "\toutput_distance (for batch): " << output_distance << std::endl;
     
-    if(d_input == d_output)
+    if(R2C)
     {
-        hipLaunchKernelGGL((real_1d_pre_post_process_kernel<T, true, R2C>),
-                           grid,
-                           threads,
-                           0,
-                           rocfft_stream,
-                           half_N,
-                           input_stride,
-                           output_stride,
-                           d_input,
-                           input_distance,
-                           d_output,
-                           output_distance,
-                           d_twiddles);
+        if(d_input == d_output)
+        {
+            hipLaunchKernelGGL((real_1d_pre_post_process_kernel<T, true, R2C>),
+                               grid,
+                               threads,
+                               0,
+                               rocfft_stream,
+                               half_N,
+                               input_stride,
+                               output_stride,
+                               d_input,
+                               input_distance,
+                               d_output,
+                               output_distance,
+                               d_twiddles);
+        }
+        else
+        {
+            hipLaunchKernelGGL((real_1d_pre_post_process_kernel<T, false, R2C>),
+                               grid,
+                               threads,
+                               0,
+                               rocfft_stream,
+                               half_N,
+                               input_stride,
+                               output_stride,
+                               d_input,
+                               input_distance,
+                               d_output,
+                               output_distance,
+                               d_twiddles);
+        }
     }
     else
     {
-        hipLaunchKernelGGL((real_1d_pre_post_process_kernel<T, false, R2C>),
+        
+        hipLaunchKernelGGL((real_pre_process_kernel<T>),
                            grid,
                            threads,
                            0,
@@ -483,9 +560,16 @@ void real_1d_pre_post_process(size_t const half_N,
                            d_output,
                            output_distance,
                            d_twiddles);
+        hipDeviceSynchronize();
+        std::vector<float2> output(half_N * high_dimension);
+        hipMemcpy(output.data(), d_output, output.size() * sizeof(decltype(output)::value_type),
+                  hipMemcpyDeviceToHost);
+        for(int i = 0; i < output.size(); ++i) {
+            std::cout << output[i].x << " , " << output[i].y << std::endl;
+        }
     }
 }
-
+    
 template <bool R2C>
 void real_1d_pre_post(const void* data_p, void* back_p)
 {
@@ -498,10 +582,9 @@ void real_1d_pre_post(const void* data_p, void* back_p)
     size_t input_distance  = data->node->iDist;
     size_t output_distance = data->node->oDist;
 
-    size_t input_stride
-        = (data->node->length.size() > 1) ? data->node->inStride[1] : input_distance;
-    size_t output_stride
-        = (data->node->length.size() > 1) ? data->node->outStride[1] : output_distance;
+    // Strides are actually distances between contiguous data vectors.
+    size_t input_stride = data->node->inStride[0];
+    size_t output_stride = data->node->outStride[0];
 
     void* input_buffer  = data->bufIn[0];
     void* output_buffer = data->bufOut[0];
@@ -515,7 +598,8 @@ void real_1d_pre_post(const void* data_p, void* back_p)
             high_dimension *= data->node->length[i];
         }
     }
-
+    std::cout << __LINE__<< " : " << high_dimension << std::endl;
+    
     if(data->node->precision == rocfft_precision_single)
     {
         real_1d_pre_post_process<float2, R2C>(half_N,

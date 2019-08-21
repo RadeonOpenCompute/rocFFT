@@ -28,6 +28,7 @@
 #include "rocfft.h"
 
 #include <assert.h>
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <numeric>
@@ -695,7 +696,7 @@ ROCFFT_EXPORT rocfft_status rocfft_get_version_string(char* buf, const size_t le
 void TreeNode::BuildRealEven()
 {
     // Fastet moving dimension must be even:
-    assert(length[dimension - 1] % 2 == 0);
+    assert(length[0] % 2 == 0);
 
     scheme = CS_REAL_TRANSFORM_EVEN;
 
@@ -754,12 +755,11 @@ void TreeNode::BuildRealEven()
 	TreeNode* prePlan     = TreeNode::CreateNode(this);
 	prePlan->scheme       = CS_KERNEL_CMPLX_TO_R;
 	prePlan->dimension    = 1;
-	prePlan->length       = {length[0] / 2};
-	prePlan->batch        = std::accumulate(length.begin() + 1, length.end(),
-						 1, std::multiplies<size_t>());
-	prePlan->inArrayType  = rocfft_array_type_hermitian_interleaved;
+	prePlan->length       = length;
+        prePlan->length[0]    /= 2;
+	prePlan->batch        = batch;
+        prePlan->inArrayType  = rocfft_array_type_hermitian_interleaved;
 	prePlan->outArrayType = rocfft_array_type_complex_interleaved;
-
 	childNodes.push_back(prePlan);
 	    
         // cfftPlan works in-place on the output buffer.
@@ -2148,13 +2148,23 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
 
             TreeNode* prePlan = childNodes[0];
             assert(prePlan->scheme == CS_KERNEL_CMPLX_TO_R);
-            prePlan->inStride  = {inStride[0]};
-            prePlan->iDist     = length[0] + 1;
-            prePlan->outStride = {outStride[0]};
-            prePlan->oDist     = length[0]; // FIXME: placeness?
+
+            // FIXME: placeness?
+            prePlan->iDist = iDist;
+            prePlan->oDist = oDist / 2;
+
+            prePlan->inStride.resize(dimension);
+            prePlan->inStride[0] = length[0] / 2 + 1;
+            std::fill(prePlan->inStride.begin() + 1, prePlan->inStride.end(), 0);
+            
+            prePlan->outStride.resize(dimension);
+            prePlan->outStride[0] = length[0] / 2 + (placement == rocfft_placement_inplace ? 1 : 0);
+            std::fill(prePlan->outStride.begin() + 1, prePlan->outStride.end(), 0);
+
             assert(prePlan->length.size() == prePlan->inStride.size());
             assert(prePlan->length.size() == prePlan->outStride.size());
 
+            
             TreeNode* fftPlan  = childNodes[1];
             fftPlan->inStride  = outStride;
             fftPlan->iDist     = oDist / 2;
