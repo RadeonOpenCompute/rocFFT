@@ -392,8 +392,8 @@ __global__ void real_1d_pre_post_process_kernel(size_t   half_N,
         {
             T p             = input[0];
             T q             = input[half_N];
-            output[idx_p].x = p.x + q.x;
-            output[idx_p].y = p.x - q.x;
+            output[idx_p].x = p.x - p.y + q.x + q.y;
+            output[idx_p].y = p.x + p.y - q.x - q.y;
         }
     }
     else if(idx_p <= half_N >> 1)
