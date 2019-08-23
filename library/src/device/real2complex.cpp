@@ -438,20 +438,20 @@ __global__ void real_pre_process_kernel(const size_t half_N,
                                         const size_t iDist1D,
                                         const size_t oDist1D,
                                         const T*     input0,
-                                        const size_t input_distance,
+                                        const size_t iDist,
                                         T*           output0,
-                                        const size_t output_distance,
+                                        const size_t oDist,
                                         T const*     twiddles)
 {
-    // blockIdx.z gives the batch offset
-    // blockIdx.y gives the multi-dimensional offset
     const size_t idx_p = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t idx_q = half_N - idx_p;
             
     if(idx_p <= half_N >> 1)
     {
-        const T* input  = input0  + blockIdx.y * iDist1D; 
-        T*       output = output0 + blockIdx.y * oDist1D;
+      // blockIdx.y gives the multi-dimensional offset
+      // blockIdx.z gives the batch offset
+      const T* input  = input0  + blockIdx.y * iDist1D + blockIdx.z * iDist;
+      T*       output = output0 + blockIdx.y * oDist1D + blockIdx.z * oDist;
 
         
         const T p = input[idx_p];
@@ -459,18 +459,11 @@ __global__ void real_pre_process_kernel(const size_t half_N,
         
         if(idx_p == 0)
         {
-            // output[idx_p].x = p.x + q.x;
-            // output[idx_p].y = p.x - q.x;
-
-            output[idx_p].x = p.x - p.y + q.x + q.y;
-            output[idx_p].y = p.x + p.y - q.x - q.y;
-            
-            // output[idx_p].x=idx_p+blockIdx.y * iDist1D + 0.01 * (idx_q + blockIdx.y * iDist1D);
-            // output[idx_p].y=idx_p + blockIdx.y * oDist1D;
-
-            //output[idx_p] = p;
-            //output[idx_p].y = p.x - q.x;
-            
+	  // NB: multi-dimensional transforms may have non-zero imaginary part at index 0.
+	  // However, the Nyquist frequency is guaranteed to be purely real for even-length
+	  // transforms.
+            output[idx_p].x = p.x - p.y + q.x;
+	    output[idx_p].y = p.x + p.y - q.x;
         }
         else
         {
@@ -478,20 +471,13 @@ __global__ void real_pre_process_kernel(const size_t half_N,
             const T v(p.x - q.x, p.y + q.y); // p - conj(q)
 
             const T twd_p(-twiddles[idx_p].x, twiddles[idx_p].y);
-            const T twd_q(-twiddles[idx_q].x, twiddles[idx_q].y);
+	    // NB: twd_q = -conj(twd_p)
 
             output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
             output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
 
-            output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
-            output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
-
-            // output[idx_p].x = idx_p + blockIdx.y * iDist1D + 0.01 * (idx_q + blockIdx.y * iDist1D);
-            // output[idx_p].y = idx_p + blockIdx.y * oDist1D;
-
-            // output[idx_q].x = idx_q + blockIdx.y * iDist1D + 0.01 * (idx_p + blockIdx.y * iDist1D);
-            // output[idx_q].y = idx_q + blockIdx.y * oDist1D;
-
+            output[idx_q].x = u.x - v.x * twd_p.y - v.y * twd_p.x;
+            output[idx_q].y = -u.y + v.y * twd_p.y - v.x * twd_p.x;
         }
     }
 }
@@ -558,47 +544,47 @@ void real_1d_pre_post_process(size_t const half_N,
     else
     {
 
-        size_t iDist1D = input_stride;
-        size_t oDist1D = output_stride;
-        std::cout << __LINE__ << std::endl;
-        std::cout << "high_dimension: " << high_dimension << std::endl;
-        std::cout << "\tinput_stride (actually contig input dist): " << input_stride << std::endl;
-        std::cout << "\toutput_stride (actually contig output dist): " << output_stride << std::endl;
-        std::cout << "batch: " << batch << std::endl;
-        std::cout << "\tinput_distance (for batch): " << input_distance << std::endl;
-        std::cout << "\toutput_distance (for batch): " << output_distance << std::endl;
+        const size_t iDist1D = input_stride;
+        const size_t oDist1D = output_stride;
+        // std::cout << __LINE__ << std::endl;
+        // std::cout << "high_dimension: " << high_dimension << std::endl;
+        // std::cout << "\tinput_stride (actually contig input dist): " << input_stride << std::endl;
+        // std::cout << "\toutput_stride (actually contig output dist): " << output_stride << std::endl;
+        // std::cout << "batch: " << batch << std::endl;
+        // std::cout << "\tinput_distance (for batch): " << input_distance << std::endl;
+        // std::cout << "\toutput_distance (for batch): " << output_distance << std::endl;
 
         
-        std::cout << __FILE__ << std::endl;
-        hipDeviceSynchronize();
-        std::cout << "input:" << std::endl;
-        std::vector<float2> input(input_stride * high_dimension);
-        hipMemcpy(input.data(),
-                  d_input,
-                  input.size() * sizeof(decltype(input)::value_type),
-                  hipMemcpyDeviceToHost);
-        for(int i = 0; i < input.size(); ++i) {
-            std::cout << input[i].x << " , " << input[i].y << std::endl;
-        }
-        hipDeviceSynchronize();
+        // std::cout << __FILE__ << std::endl;
+        // hipDeviceSynchronize();
+        // std::cout << "input:" << std::endl;
+        // std::vector<float2> input(input_stride * high_dimension);
+        // hipMemcpy(input.data(),
+        //           d_input,
+        //           input.size() * sizeof(decltype(input)::value_type),
+        //           hipMemcpyDeviceToHost);
+        // for(int i = 0; i < input.size(); ++i) {
+        //     std::cout << input[i].x << " , " << input[i].y << std::endl;
+        // }
+        // hipDeviceSynchronize();
 
-        std::vector<float2> output(half_N * high_dimension);
-        std::fill(output.begin(), output.end(), float2(0,0));
-        hipMemcpy(d_output,
-                  output.data(),
-                  output.size() * sizeof(decltype(output)::value_type),
-                  hipMemcpyHostToDevice);
-        hipDeviceSynchronize();
+        // std::vector<float2> output(half_N * high_dimension);
+        // std::fill(output.begin(), output.end(), float2(0,0));
+        // hipMemcpy(d_output,
+        //           output.data(),
+        //           output.size() * sizeof(decltype(output)::value_type),
+        //           hipMemcpyHostToDevice);
+        // hipDeviceSynchronize();
 
 
         const size_t block_size = 256;
         const size_t nblocks = (half_N + block_size - 1) / block_size;
         dim3 griddim(nblocks, high_dimension, batch);
         dim3 blockdim(block_size, 1, 1);
-        std::cout << "griddim: " << griddim.x << " " << griddim.y << " " << griddim.z << " "
-                  << std::endl;
-        std::cout << "blockdim: " << blockdim.x << " " << blockdim.y << " " << blockdim.z << " "
-                  << std::endl;
+        // std::cout << "griddim: " << griddim.x << " " << griddim.y << " " << griddim.z << " "
+        //           << std::endl;
+        // std::cout << "blockdim: " << blockdim.x << " " << blockdim.y << " " << blockdim.z << " "
+        //           << std::endl;
 
         
         hipLaunchKernelGGL((real_pre_process_kernel<T>),
@@ -615,16 +601,16 @@ void real_1d_pre_post_process(size_t const half_N,
                            output_distance,
                            d_twiddles);
         
-        hipDeviceSynchronize();
-        std::cout << "output:" << std::endl;
-        
-        hipMemcpy(output.data(),
-                  d_output,
-                  output.size() * sizeof(decltype(output)::value_type),
-                  hipMemcpyDeviceToHost);
-        for(int i = 0; i < output.size(); ++i) {
-            std::cout << output[i].x << " , " << output[i].y << std::endl;
-        }
+        // hipDeviceSynchronize();
+        // std::cout << "output:" << std::endl;
+	// hipMemcpy(output.data(),
+        //           d_output,
+        //           output.size() * sizeof(decltype(output)::value_type),
+        //           hipMemcpyDeviceToHost);
+        // for(int i = 0; i < output.size(); ++i) {
+        //     std::cout << output[i].x << " , " << output[i].y << std::endl;
+        // }
+	
     }
 }
     
@@ -656,8 +642,7 @@ void real_1d_pre_post(const void* data_p, void* back_p)
             high_dimension *= data->node->length[i];
         }
     }
-    std::cout << __LINE__<< " : " << high_dimension << std::endl;
-    
+
     if(data->node->precision == rocfft_precision_single)
     {
         real_1d_pre_post_process<float2, R2C>(half_N,
