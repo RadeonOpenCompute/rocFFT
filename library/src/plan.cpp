@@ -2153,12 +2153,14 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
             prePlan->iDist = iDist;
             prePlan->oDist = oDist / 2;
 
+            // Strrides are actually distances for multimensional transforms.
+            // Only the first value is used, but we require dimension values.
             prePlan->inStride.resize(dimension);
             prePlan->inStride[0] = length[0] / 2 + 1;
             std::fill(prePlan->inStride.begin() + 1, prePlan->inStride.end(), 0);
             
             prePlan->outStride.resize(dimension);
-            prePlan->outStride[0] = length[0] / 2 + (placement == rocfft_placement_inplace ? 1 : 0);
+            prePlan->outStride[0] = length[0] / 2; // FIXME: placeness
             std::fill(prePlan->outStride.begin() + 1, prePlan->outStride.end(), 0);
 
             assert(prePlan->length.size() == prePlan->inStride.size());
@@ -2166,10 +2168,19 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
 
             
             TreeNode* fftPlan  = childNodes[1];
+            // Transform the strides from real to complex.
+
             fftPlan->inStride  = outStride;
             fftPlan->iDist     = oDist / 2;
             fftPlan->outStride = outStride;
             fftPlan->oDist     = fftPlan->iDist;
+            // The strides must be translated from real to complex.
+            for(int i = 1; i < fftPlan->inStride.size(); ++i)
+            {
+                fftPlan->inStride[i] /= 2;
+                fftPlan->outStride[i] /= 2;
+            }
+
             fftPlan->TraverseTreeAssignParamsLogicA();
             assert(fftPlan->length.size() == fftPlan->inStride.size());
             assert(fftPlan->length.size() == fftPlan->outStride.size());
