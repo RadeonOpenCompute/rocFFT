@@ -357,10 +357,12 @@ __global__ void real_1d_pre_post_process_kernel(size_t   half_N,
 
     size_t output_offset = hipBlockIdx_z * output_distance; // batch offset
 
-    // For 1D, hipBlockIdx_y == 0 and thus has no effect
-    input_offset += hipBlockIdx_y * input_stride; 
-    output_offset += hipBlockIdx_y * output_stride;
-    
+    input_offset += hipBlockIdx_y * input_stride; // notice for 1D, hipBlockIdx_y
+    // == 0 and thus has no effect
+    // for input_offset
+    output_offset += hipBlockIdx_y * output_stride; // notice for 1D, hipBlockIdx_y == 0 and
+    // thus has no effect for output_offset
+
     input += input_offset;
     output += output_offset;
 
@@ -392,11 +394,8 @@ __global__ void real_1d_pre_post_process_kernel(size_t   half_N,
         {
             T p             = input[0];
             T q             = input[half_N];
-            // output[idx_p].x = p.x + q.x;
-            // output[idx_p].y = p.x - q.x;
-            
-            output[idx_p].x = hipBlockIdx_y + 0.5;
-            output[idx_p].y = hipThreadIdx_x + 0.5;
+            output[idx_p].x = p.x - p.y + q.x;
+            output[idx_p].y = p.x + p.y - q.x;
         }
     }
     else if(idx_p <= half_N >> 1)
@@ -418,30 +417,25 @@ __global__ void real_1d_pre_post_process_kernel(size_t   half_N,
             twd_q.x = -twd_q.x;
         }
 
-        // output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
-        // output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
+        output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x; 
+        output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
 
-        // output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
-        // output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
-        
-        output[idx_p].x = hipBlockIdx_y + 0.5;
-        output[idx_p].y = hipThreadIdx_x + 0.5;
-
-        output[idx_q].x = hipBlockIdx_y + 0.5;
-        output[idx_q].y = hipThreadIdx_x + 0.5;
+        output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
+        output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
     }
 }
 
 
-template <typename T>
+
+template <typename Tcomplex>
 __global__ void real_pre_process_kernel(const size_t half_N,
                                         const size_t iDist1D,
                                         const size_t oDist1D,
-                                        const T*     input0,
+                                        const Tcomplex*     input0,
                                         const size_t iDist,
-                                        T*           output0,
+                                        Tcomplex*           output0,
                                         const size_t oDist,
-                                        T const*     twiddles)
+                                        Tcomplex const*     twiddles)
 {
     const size_t idx_p = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t idx_q = half_N - idx_p;
@@ -450,12 +444,12 @@ __global__ void real_pre_process_kernel(const size_t half_N,
     {
       // blockIdx.y gives the multi-dimensional offset
       // blockIdx.z gives the batch offset
-      const T* input  = input0  + blockIdx.y * iDist1D + blockIdx.z * iDist;
-      T*       output = output0 + blockIdx.y * oDist1D + blockIdx.z * oDist;
+      const Tcomplex* input  = input0  + blockIdx.y * iDist1D + blockIdx.z * iDist;
+      Tcomplex*       output = output0 + blockIdx.y * oDist1D + blockIdx.z * oDist;
 
         
-        const T p = input[idx_p];
-        const T q = input[idx_q];
+        const Tcomplex p = input[idx_p];
+        const Tcomplex q = input[idx_q];
         
         if(idx_p == 0)
         {
@@ -464,13 +458,17 @@ __global__ void real_pre_process_kernel(const size_t half_N,
 	  // transforms.
             output[idx_p].x = p.x - p.y + q.x;
 	    output[idx_p].y = p.x + p.y - q.x;
+
+	    // output[idx_p].x = p.x - p.y;
+	    // output[idx_p].y = p.x + p.y;
+
         }
         else
         {
-            const T u(p.x + q.x, p.y - q.y); // p + conj(q)
-            const T v(p.x - q.x, p.y + q.y); // p - conj(q)
+            const Tcomplex u(p.x + q.x, p.y - q.y); // p + conj(q)
+            const Tcomplex v(p.x - q.x, p.y + q.y); // p - conj(q)
 
-            const T twd_p(-twiddles[idx_p].x, twiddles[idx_p].y);
+            const Tcomplex twd_p(-twiddles[idx_p].x, twiddles[idx_p].y);
 	    // NB: twd_q = -conj(twd_p)
 
             output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
@@ -478,6 +476,10 @@ __global__ void real_pre_process_kernel(const size_t half_N,
 
             output[idx_q].x = u.x - v.x * twd_p.y - v.y * twd_p.x;
             output[idx_q].y = -u.y + v.y * twd_p.y - v.x * twd_p.x;
+	    
+	    // const T twd_q(-twiddles[idx_q].x, twiddles[idx_q].y);
+	    // output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
+	    // output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
         }
     }
 }
@@ -504,7 +506,6 @@ void real_1d_pre_post_process(size_t const half_N,
 
     dim3 grid(blocks, high_dimension, batch);
     dim3 threads(block_size, 1, 1);
-
    
     if(R2C)
     {
@@ -543,53 +544,12 @@ void real_1d_pre_post_process(size_t const half_N,
     }
     else
     {
-
         const size_t iDist1D = input_stride;
         const size_t oDist1D = output_stride;
-        // std::cout << __LINE__ << std::endl;
-        // std::cout << "high_dimension: " << high_dimension << std::endl;
-        // std::cout << "\tinput_stride (actually contig input dist): " << input_stride << std::endl;
-        // std::cout << "\toutput_stride (actually contig output dist): " << output_stride << std::endl;
-        // std::cout << "batch: " << batch << std::endl;
-        // std::cout << "\tinput_distance (for batch): " << input_distance << std::endl;
-        // std::cout << "\toutput_distance (for batch): " << output_distance << std::endl;
 
-        
-        // std::cout << __FILE__ << std::endl;
-        // hipDeviceSynchronize();
-        // std::cout << "input:" << std::endl;
-        // std::vector<float2> input(input_stride * high_dimension);
-        // hipMemcpy(input.data(),
-        //           d_input,
-        //           input.size() * sizeof(decltype(input)::value_type),
-        //           hipMemcpyDeviceToHost);
-        // for(int i = 0; i < input.size(); ++i) {
-        //     std::cout << input[i].x << " , " << input[i].y << std::endl;
-        // }
-        // hipDeviceSynchronize();
-
-        // std::vector<float2> output(half_N * high_dimension);
-        // std::fill(output.begin(), output.end(), float2(0,0));
-        // hipMemcpy(d_output,
-        //           output.data(),
-        //           output.size() * sizeof(decltype(output)::value_type),
-        //           hipMemcpyHostToDevice);
-        // hipDeviceSynchronize();
-
-
-        const size_t block_size = 256;
-        const size_t nblocks = (half_N + block_size - 1) / block_size;
-        dim3 griddim(nblocks, high_dimension, batch);
-        dim3 blockdim(block_size, 1, 1);
-        // std::cout << "griddim: " << griddim.x << " " << griddim.y << " " << griddim.z << " "
-        //           << std::endl;
-        // std::cout << "blockdim: " << blockdim.x << " " << blockdim.y << " " << blockdim.z << " "
-        //           << std::endl;
-
-        
         hipLaunchKernelGGL((real_pre_process_kernel<T>),
-                           griddim,
-                           blockdim,
+                           grid,
+                           threads,
                            0,
                            rocfft_stream,
                            half_N,
@@ -600,17 +560,6 @@ void real_1d_pre_post_process(size_t const half_N,
                            d_output,
                            output_distance,
                            d_twiddles);
-        
-        // hipDeviceSynchronize();
-        // std::cout << "output:" << std::endl;
-	// hipMemcpy(output.data(),
-        //           d_output,
-        //           output.size() * sizeof(decltype(output)::value_type),
-        //           hipMemcpyDeviceToHost);
-        // for(int i = 0; i < output.size(); ++i) {
-        //     std::cout << output[i].x << " , " << output[i].y << std::endl;
-        // }
-	
     }
 }
     
