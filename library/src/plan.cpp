@@ -811,7 +811,8 @@ void TreeNode::BuildReal()
   if(inStride[0] == 1
      && outStride[0] == 1
      && length[0] % 2 == 0
-     && (dimension == 1 || direction == 1))
+     && (dimension == 1 || direction == 1)
+     && placement != rocfft_placement_inplace)
     {
         BuildRealEven();
     }

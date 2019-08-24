@@ -31,22 +31,22 @@
 
 #include "rocfft.h"
 
-int main()
+int main(int argc, char* argv[])
 {
-    // The problem size
-    const size_t N = 8;
-
-    std::cout << "Real/complex 1d in-place FFT example\n";
+  std::cout << "Real/complex 1d in-place FFT example\n";
+  
+  // The problem size
+  const size_t Nx = (argc < 2) ? 8 : atoi(argv[1]);
 
     // Initialize data on the host
-    std::vector<float> cx(N);
-    for(size_t i = 0; i < N; i++)
+    std::vector<float> cx(Nx);
+    for(size_t i = 0; i < Nx; i++)
     {
         cx[i] = i;
     }
 
     std::cout << "Input:\n";
-    for(size_t i = 0; i < N; i++)
+    for(size_t i = 0; i < cx.size(); i++)
     {
         std::cout << cx[i] << "  ";
     }
@@ -58,7 +58,7 @@ int main()
     float* x;
     hipMalloc(&x, cx.size() * sizeof(decltype(cx)::value_type));
     float2* y;
-    hipMalloc(&y, (N / 2 + 1) * sizeof(float));
+    hipMalloc(&y, (Nx / 2 + 1) * sizeof(float));
 
     //  Copy data to device
     hipMemcpy(x, cx.data(), cx.size() * sizeof(decltype(cx)::value_type), hipMemcpyHostToDevice);
@@ -70,7 +70,7 @@ int main()
                        rocfft_transform_type_real_forward,
                        rocfft_precision_single,
                        1, // Dimensions
-                       &N, // lengths
+                       &Nx, // lengths
                        1, // Number of transforms
                        NULL); // Description
 
@@ -91,7 +91,7 @@ int main()
                    fftinfo); // execution info
 
     std::cout << "Transformed:\n";
-    std::vector<float2> cy(N / 2 + 1);
+    std::vector<float2> cy(Nx / 2 + 1);
     hipMemcpy(cy.data(), y, cy.size() * sizeof(decltype(cy)::value_type), hipMemcpyDeviceToHost);
     for(size_t i = 0; i < cy.size(); i++)
     {
@@ -106,7 +106,7 @@ int main()
                        rocfft_transform_type_real_inverse,
                        rocfft_precision_single,
                        1, // Dimensions
-                       &N, // lengths
+                       &Nx, // lengths
                        1, // Number of transforms
                        NULL); // Description
 
@@ -117,7 +117,7 @@ int main()
                    fftinfo); // execution info
 
     std::cout << "Transformed back:\n";
-    std::vector<float> backx(N);
+    std::vector<float> backx(Nx);
     hipMemcpy(
         backx.data(), x, backx.size() * sizeof(decltype(backx)::value_type), hipMemcpyDeviceToHost);
     for(size_t i = 0; i < backx.size(); i++)
@@ -126,7 +126,7 @@ int main()
     }
     std::cout << "\n";
 
-    const float overN = 1.0f / N;
+    const float overN = 1.0f / Nx;
     float       error = 0.0f;
     for(size_t i = 0; i < cx.size(); i++)
     {
