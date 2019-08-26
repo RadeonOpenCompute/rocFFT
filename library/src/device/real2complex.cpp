@@ -546,7 +546,7 @@ void real_1d_pre_post_process(size_t const half_N,
     {
         const size_t iDist1D = input_stride;
         const size_t oDist1D = output_stride;
-
+        
         hipLaunchKernelGGL((real_pre_process_kernel<T>),
                            grid,
                            threads,
