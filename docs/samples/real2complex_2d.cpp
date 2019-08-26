@@ -172,15 +172,17 @@ int main(int argc, char* argv[])
     }
     std::cout << "\n";
 
-    const float overN = 1.0f / cx.size();
+    const float overN = 1.0f / (Nx * Ny);
     float       error = 0.0f;
-    for(size_t i = 0; i < cx.size(); i++)
+    for(size_t i = 0; i < Nx; i++)
     {
-        //std::cout << "i: " << i << "\t" << cx[i] << "\t" << backx[i] << "\n";
-        float diff = std::abs(backx[i] * overN - cx[i]);
-        if(diff > error)
+        for(size_t j = 0; j < Ny; j++)
         {
-            error = diff;
+            float diff = std::abs(backx[i] * overN - cx[i]);
+            if(diff > error)
+            {
+                error = diff;
+            }
         }
     }
     std::cout << "Maximum error: " << error << "\n";
