@@ -263,8 +263,6 @@ TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_s
         = rocfft_transform_type_real_forward; // must be real forward
     size_t stride = 1; // FIXME: enable strides
 
-    std::cout << placeness << std::endl;
-
     try
     {
         normal_1D_real_interleaved_to_hermitian_interleaved<float, fftwf_complex>(
