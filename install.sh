@@ -147,7 +147,7 @@ install_dnf_packages( )
     done
 }
 
-# Take an array of packages as input, and install those packages with 'yum' if they are
+# Take an array of packages as input, and install those packages with 'zypper' if they are
 # not already installed
 install_zypper_packages( )
 {
@@ -223,7 +223,7 @@ install_packages( )
             ;;
         
         sles)
-            # elevate_if_not_root yum -y update
+            # elevate_if_not_root zypper -n update
             install_zypper_packages "${library_dependencies_sles[@]}"
 
             if [[ "${build_clients}" == true ]]; then
@@ -382,10 +382,10 @@ cmake_client_options=""
 # build type
 if [[ "${build_release}" == true ]]; then
     mkdir -p ${build_dir}/release/clients && cd ${build_dir}/release
-    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Release"
+    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Release -DHCC_AMDGPU_TARGET=gfx803,gfx900,gfx906,gfx908"
 else
     mkdir -p ${build_dir}/debug/clients && cd ${build_dir}/debug
-    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Debug"
+    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Debug -DHCC_AMDGPU_TARGET=gfx803,gfx900,gfx906,gfx908"
 fi
 
 # clients
