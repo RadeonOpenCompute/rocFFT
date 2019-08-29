@@ -27,8 +27,8 @@
 #include "repo.h"
 #include "rocfft.h"
 
-#include <assert.h>
 #include <algorithm>
+#include <assert.h>
 #include <iostream>
 #include <map>
 #include <numeric>
@@ -811,8 +811,7 @@ void TreeNode::BuildReal()
   if(inStride[0] == 1
      && outStride[0] == 1
      && length[0] % 2 == 0
-     && (dimension == 1 || direction == 1)
-     && placement != rocfft_placement_inplace)
+     && (dimension == 1 || direction == 1))
     {
         BuildRealEven();
     }
@@ -2159,9 +2158,10 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
             prePlan->inStride.resize(dimension);
             prePlan->inStride[0] = length[0] / 2 + 1;
             std::fill(prePlan->inStride.begin() + 1, prePlan->inStride.end(), 0);
-            
+
+            // Strides are in complex types
             prePlan->outStride.resize(dimension);
-            prePlan->outStride[0] = length[0] / 2; // FIXME: placeness
+            prePlan->outStride[0] = length[0] / 2 + (placement == rocfft_placement_inplace ? 1 : 0);
             std::fill(prePlan->outStride.begin() + 1, prePlan->outStride.end(), 0);
 
             assert(prePlan->length.size() == prePlan->inStride.size());
