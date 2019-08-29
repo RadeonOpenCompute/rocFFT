@@ -382,10 +382,10 @@ cmake_client_options=""
 # build type
 if [[ "${build_release}" == true ]]; then
     mkdir -p ${build_dir}/release/clients && cd ${build_dir}/release
-    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Release -DHCC_AMDGPU_TARGET=gfx803,gfx900,gfx906,gfx908"
+    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Release"
 else
     mkdir -p ${build_dir}/debug/clients && cd ${build_dir}/debug
-    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Debug -DHCC_AMDGPU_TARGET=gfx803,gfx900,gfx906,gfx908"
+    cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Debug"
 fi
 
 # clients
