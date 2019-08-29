@@ -24,6 +24,7 @@ RUN zypper -n update && zypper -n install\
     cmake \
     fftw3-devel \
     rpm-build \
+    dpkg \
     python2-PyYAML \
     libboost_program_options1_66_0-devel\
     libcxxtools9 \
