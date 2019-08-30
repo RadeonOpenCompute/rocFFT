@@ -87,7 +87,11 @@ rocFFTCI:
 
         def command 
         
-        if(platform.jenkinsLabel.contains('centos'))
+        if(platform.jenkinsLabel.contains('hip-clang'))
+        {
+            packageCommand = null
+        }
+        else if(platform.jenkinsLabel.contains('centos'))
         {
             command = """
                     set -x
@@ -114,10 +118,6 @@ rocFFTCI:
 
             platform.runCommand(this, command)
             platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.rpm""")        
-        }
-        else if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            packageCommand = null
         }
         else
         {
