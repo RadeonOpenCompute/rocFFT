@@ -340,14 +340,14 @@ void complex2hermitian(const void* data_p, void* back_p)
 // T is memory allocation type, could be float2 or double2.
 // Each thread handles 2 points.
 template <typename T, bool IN_PLACE>
-__global__ void real_pre_process_kernel(size_t   half_N,
-                                        size_t   input_stride,
-                                        size_t   output_stride,
-                                        T*       input,
-                                        size_t   input_distance,
-                                        T*       output,
-                                        size_t   output_distance,
-                                        T const* twiddles)
+__global__ void real_post_process_kernel(size_t   half_N,
+                                         size_t   input_stride,
+                                         size_t   output_stride,
+                                         T*       input,
+                                         size_t   input_distance,
+                                         T*       output,
+                                         size_t   output_distance,
+                                         T const* twiddles)
 {
     size_t input_offset = hipBlockIdx_z * input_distance; // batch offset
 
@@ -457,12 +457,12 @@ __global__ void real_pre_process_kernel(const size_t    half_N,
 }
 
 // GPU intermediate host code
-template <typename T, bool R2C>
+template <typename Tcomplex, bool R2C>
 void real_1d_pre_post_process(size_t const half_N,
                               size_t       batch,
-                              T*           d_input,
-                              T*           d_output,
-                              T*           d_twiddles,
+                              Tcomplex*    d_input,
+                              Tcomplex*    d_output,
+                              Tcomplex*    d_twiddles,
                               size_t       high_dimension,
                               size_t       input_stride,
                               size_t       output_stride,
@@ -481,8 +481,8 @@ void real_1d_pre_post_process(size_t const half_N,
 
     if(R2C)
     {
-        hipLaunchKernelGGL((d_input == d_output) ? (real_pre_process_kernel<T, true>)
-                                                 : (real_pre_process_kernel<T, false>),
+        hipLaunchKernelGGL((d_input == d_output) ? (real_post_process_kernel<Tcomplex, true>)
+                                                 : (real_post_process_kernel<Tcomplex, false>),
                            grid,
                            threads,
                            0,
@@ -501,7 +501,7 @@ void real_1d_pre_post_process(size_t const half_N,
         const size_t iDist1D = input_stride;
         const size_t oDist1D = output_stride;
 
-        hipLaunchKernelGGL((real_pre_process_kernel<T>),
+        hipLaunchKernelGGL((real_pre_process_kernel<Tcomplex>),
                            grid,
                            threads,
                            0,
