@@ -752,16 +752,16 @@ void TreeNode::BuildRealEven()
         assert(outArrayType == rocfft_array_type_real);
         assert(outStride[0] == 1); // assumed contigous for now
 
-	TreeNode* prePlan     = TreeNode::CreateNode(this);
-	prePlan->scheme       = CS_KERNEL_CMPLX_TO_R;
-	prePlan->dimension    = 1;
-	prePlan->length       = length;
-        prePlan->length[0]    /= 2;
-	prePlan->batch        = batch;
+        TreeNode* prePlan  = TreeNode::CreateNode(this);
+        prePlan->scheme    = CS_KERNEL_CMPLX_TO_R;
+        prePlan->dimension = 1;
+        prePlan->length    = length;
+        prePlan->length[0] /= 2;
+        prePlan->batch        = batch;
         prePlan->inArrayType  = rocfft_array_type_hermitian_interleaved;
-	prePlan->outArrayType = rocfft_array_type_complex_interleaved;
-	childNodes.push_back(prePlan);
-	    
+        prePlan->outArrayType = rocfft_array_type_complex_interleaved;
+        childNodes.push_back(prePlan);
+
         // cfftPlan works in-place on the output buffer.
         // NB: the output buffer is real, but we treat it as complex
         cfftPlan->obIn = obOut;
@@ -807,11 +807,9 @@ void TreeNode::BuildRealEmbed()
 
 void TreeNode::BuildReal()
 {
-  //FIXME: all data must be contiguous, in fact.
-  if(inStride[0] == 1
-     && outStride[0] == 1
-     && length[0] % 2 == 0
-     && (dimension == 1 || direction == 1))
+    // TODO: all data must be contiguous, in fact.
+    if(inStride[0] == 1 && outStride[0] == 1 && length[0] % 2 == 0
+       && (dimension == 1 || direction == 1))
     {
         BuildRealEven();
     }
@@ -2167,8 +2165,7 @@ void TreeNode::TraverseTreeAssignParamsLogicA()
             assert(prePlan->length.size() == prePlan->inStride.size());
             assert(prePlan->length.size() == prePlan->outStride.size());
 
-            
-            TreeNode* fftPlan  = childNodes[1];
+            TreeNode* fftPlan = childNodes[1];
             // Transform the strides from real to complex.
 
             fftPlan->inStride  = outStride;

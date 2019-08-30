@@ -282,14 +282,14 @@ void TransformPowX(const ExecPlan&       execPlan,
         data.gridParam = execPlan.gridParam[i];
 
 #ifdef TMP_DEBUG
-        size_t in_size       = data.node->iDist * data.node->batch;
+        size_t in_size = data.node->iDist * data.node->batch;
         // FIXME: real data? double precision
         size_t in_size_bytes = in_size * 2 * sizeof(float);
         void*  dbg_in        = malloc(in_size_bytes);
         hipDeviceSynchronize();
         hipMemcpy(dbg_in, data.bufIn[0], in_size_bytes, hipMemcpyDeviceToHost);
 
-        size_t out_size       = data.node->oDist * data.node->batch;
+        size_t out_size = data.node->oDist * data.node->batch;
         // FIXME: real data? double precision
         size_t out_size_bytes = out_size * 2 * sizeof(float);
         void*  dbg_out        = malloc(out_size_bytes);
@@ -310,7 +310,8 @@ void TransformPowX(const ExecPlan&       execPlan,
             std::cout << "\n\nkernel: " << i << std::endl;
             std::cout << "\tscheme: " << PrintScheme(execPlan.execSeq[i]->scheme) << std::endl;
             std::cout << "\tlength: ";
-            for (const auto &i : execPlan.execSeq[i]->length) {
+            for(const auto& i : execPlan.execSeq[i]->length)
+            {
                 std::cout << i << " ";
             }
             std::cout << std::endl;
@@ -318,12 +319,14 @@ void TransformPowX(const ExecPlan&       execPlan,
             std::cout << "\tiDist:   " << execPlan.execSeq[i]->iDist << std::endl;
             std::cout << "\toDist:   " << execPlan.execSeq[i]->oDist << std::endl;
             std::cout << "\tiStride: ";
-            for (const auto &i : execPlan.execSeq[i]->inStride) {
+            for(const auto& i : execPlan.execSeq[i]->inStride)
+            {
                 std::cout << i << " ";
             }
             std::cout << std::endl;
             std::cout << "\toStride: ";
-            for (const auto &i : execPlan.execSeq[i]->outStride) {
+            for(const auto& i : execPlan.execSeq[i]->outStride)
+            {
                 std::cout << i << " ";
             }
             std::cout << std::endl;
@@ -332,8 +335,8 @@ void TransformPowX(const ExecPlan&       execPlan,
 #endif
 
             // execution kernel:
-            fn(&data, &back); 
-            
+            fn(&data, &back);
+
 #ifdef REF_DEBUG
             refLibOp.VerifyResult(&data);
 #endif

@@ -395,7 +395,7 @@ __global__ void real_pre_process_kernel(size_t   half_N,
         u = u * 0.5;
         v = v * 0.5;
 
-        output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x; 
+        output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
         output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
 
         output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
@@ -405,39 +405,35 @@ __global__ void real_pre_process_kernel(size_t   half_N,
 
 // Preprocess kernel for complex-to-real transform.
 template <typename Tcomplex>
-__global__ void real_pre_process_kernel(const size_t half_N,
-                                        const size_t iDist1D,
-                                        const size_t oDist1D,
-                                        const Tcomplex*     input0,
-                                        const size_t iDist,
-                                        Tcomplex*           output0,
-                                        const size_t oDist,
-                                        Tcomplex const*     twiddles)
+__global__ void real_pre_process_kernel(const size_t    half_N,
+                                        const size_t    iDist1D,
+                                        const size_t    oDist1D,
+                                        const Tcomplex* input0,
+                                        const size_t    iDist,
+                                        Tcomplex*       output0,
+                                        const size_t    oDist,
+                                        Tcomplex const* twiddles)
 {
     const size_t idx_p = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t idx_q = half_N - idx_p;
-            
+
     if(idx_p <= half_N >> 1)
     {
-      // blockIdx.y gives the multi-dimensional offset
-      // blockIdx.z gives the batch offset
-      const Tcomplex* input  = input0  + blockIdx.y * iDist1D + blockIdx.z * iDist;
-      Tcomplex*       output = output0 + blockIdx.y * oDist1D + blockIdx.z * oDist;
-        
+        // blockIdx.y gives the multi-dimensional offset
+        // blockIdx.z gives the batch offset
+        const Tcomplex* input  = input0 + blockIdx.y * iDist1D + blockIdx.z * iDist;
+        Tcomplex*       output = output0 + blockIdx.y * oDist1D + blockIdx.z * oDist;
+
         const Tcomplex p = input[idx_p];
         const Tcomplex q = input[idx_q];
-        
+
         if(idx_p == 0)
         {
-	  // NB: multi-dimensional transforms may have non-zero imaginary part at index 0.
-	  // However, the Nyquist frequency is guaranteed to be purely real for even-length
-	  // transforms.
+            // NB: multi-dimensional transforms may have non-zero imaginary part at index 0.
+            // However, the Nyquist frequency is guaranteed to be purely real for even-length
+            // transforms.
             output[idx_p].x = p.x - p.y + q.x;
-	    output[idx_p].y = p.x + p.y - q.x;
-
-	    // output[idx_p].x = p.x - p.y;
-	    // output[idx_p].y = p.x + p.y;
-
+            output[idx_p].y = p.x + p.y - q.x;
         }
         else
         {
@@ -445,17 +441,17 @@ __global__ void real_pre_process_kernel(const size_t half_N,
             const Tcomplex v(p.x - q.x, p.y + q.y); // p - conj(q)
 
             const Tcomplex twd_p(-twiddles[idx_p].x, twiddles[idx_p].y);
-	    // NB: twd_q = -conj(twd_p)
+            // NB: twd_q = -conj(twd_p)
 
             output[idx_p].x = u.x + v.x * twd_p.y + v.y * twd_p.x;
             output[idx_p].y = u.y + v.y * twd_p.y - v.x * twd_p.x;
 
             output[idx_q].x = u.x - v.x * twd_p.y - v.y * twd_p.x;
             output[idx_q].y = -u.y + v.y * twd_p.y - v.x * twd_p.x;
-	    
-	    // const T twd_q(-twiddles[idx_q].x, twiddles[idx_q].y);
-	    // output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
-	    // output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
+
+            // const T twd_q(-twiddles[idx_q].x, twiddles[idx_q].y);
+            // output[idx_q].x = u.x - v.x * twd_q.y + v.y * twd_q.x;
+            // output[idx_q].y = -u.y + v.y * twd_q.y + v.x * twd_q.x;
         }
     }
 }
@@ -482,11 +478,11 @@ void real_1d_pre_post_process(size_t const half_N,
 
     dim3 grid(blocks, high_dimension, batch);
     dim3 threads(block_size, 1, 1);
-   
+
     if(R2C)
     {
         hipLaunchKernelGGL((d_input == d_output) ? (real_pre_process_kernel<T, true>)
-                           : (real_pre_process_kernel<T, false>),
+                                                 : (real_pre_process_kernel<T, false>),
                            grid,
                            threads,
                            0,
@@ -504,7 +500,7 @@ void real_1d_pre_post_process(size_t const half_N,
     {
         const size_t iDist1D = input_stride;
         const size_t oDist1D = output_stride;
-        
+
         hipLaunchKernelGGL((real_pre_process_kernel<T>),
                            grid,
                            threads,
@@ -520,7 +516,7 @@ void real_1d_pre_post_process(size_t const half_N,
                            d_twiddles);
     }
 }
-    
+
 template <bool R2C>
 void real_1d_pre_post(const void* data_p, void* back_p)
 {
@@ -534,7 +530,7 @@ void real_1d_pre_post(const void* data_p, void* back_p)
     size_t output_distance = data->node->oDist;
 
     // Strides are actually distances between contiguous data vectors.
-    size_t input_stride = data->node->inStride[0];
+    size_t input_stride  = data->node->inStride[0];
     size_t output_stride = data->node->outStride[0];
 
     void* input_buffer  = data->bufIn[0];
