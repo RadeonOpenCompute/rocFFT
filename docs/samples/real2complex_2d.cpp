@@ -1,24 +1,22 @@
-/******************************************************************************
-* Copyright (c) 2019 - present Advanced Micro Devices, Inc. All rights reserved.
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-* THE SOFTWARE.
-*******************************************************************************/
+// Copyright (c) 2019 - present Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
 #include <algorithm>
 #include <cmath>
@@ -33,7 +31,7 @@
 
 int main(int argc, char* argv[])
 {
-    std::cout << "Real/complex 2d FFT example\n";
+    std::cout << "rocFFT real/complex 2d FFT example\n";
 
     // The problem size
     const size_t Nx = (argc < 2) ? 8 : atoi(argv[1]);
@@ -75,15 +73,14 @@ int main(int argc, char* argv[])
     // Create HIP device objects:
     float* x = NULL;
     hipMalloc(&x, cx.size() * sizeof(decltype(cx)::value_type));
+    hipMemcpy(x, cx.data(), cx.size() * sizeof(decltype(cx)::value_type), hipMemcpyHostToDevice);
     float2* y = inplace ? (float2*)x : NULL;
     if(!inplace)
     {
         hipMalloc(&y, cy.size() * sizeof(decltype(cy)::value_type));
     }
 
-    //  Copy data to device
-    hipMemcpy(x, cx.data(), cx.size() * sizeof(decltype(cx)::value_type), hipMemcpyHostToDevice);
-
+    // Length are in reverse order because rocfft is column-major. 
     const size_t lengths[2] = {Ny, Nx};
 
     // Create plans
@@ -92,10 +89,10 @@ int main(int argc, char* argv[])
                        inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
                        rocfft_transform_type_real_forward,
                        rocfft_precision_single,
-                       2, // Dimensions
+                       2,       // Dimensions
                        lengths, // lengths
-                       1, // Number of transforms
-                       NULL); // Description
+                       1,       // Number of transforms
+                       NULL);   // Description
 
     // The real-to-complex transform uses work memory, which is passed
     // via a rocfft_execution_info struct.
@@ -108,9 +105,9 @@ int main(int argc, char* argv[])
     rocfft_execution_info_set_work_buffer(forwardinfo, forwardwbuffer, forwardworkbuffersize);
 
     // Execute the forward transform
-    rocfft_execute(forward, // plan
-                   (void**)&x, // in_buffer
-                   (void**)&y, // out_buffer
+    rocfft_execute(forward,      // plan
+                   (void**)&x,   // in_buffer
+                   (void**)&y,   // out_buffer
                    forwardinfo); // execution info
 
     std::cout << "Transformed:\n";
@@ -133,10 +130,10 @@ int main(int argc, char* argv[])
                        inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
                        rocfft_transform_type_real_inverse,
                        rocfft_precision_single,
-                       2, // Dimensions
+                       2,       // Dimensions
                        lengths, // lengths
-                       1, // Number of transforms
-                       NULL); // Description
+                       1,       // Number of transforms
+                       NULL);   // Description
 
 
     // The real-to-complex transform uses work memory, which is passed
@@ -148,12 +145,11 @@ int main(int argc, char* argv[])
     void* backwardwbuffer = NULL;
     hipMalloc(&backwardwbuffer, backwardworkbuffersize);
     rocfft_execution_info_set_work_buffer(backwardinfo, backwardwbuffer, backwardworkbuffersize);
-
-    
+   
     // Execute the backward transform
-    rocfft_execute(backward, // plan
-                   (void**)&y, // in_buffer
-                   (void**)&x, // out_buffer
+    rocfft_execute(backward,      // plan
+                   (void**)&y,    // in_buffer
+                   (void**)&x,    // out_buffer
                    backwardinfo); // execution info
 
     std::cout << "Transformed back:\n";
@@ -199,6 +195,4 @@ int main(int argc, char* argv[])
     rocfft_plan_destroy(backward);
 
     rocfft_cleanup();
-
-    return 0;
 }
