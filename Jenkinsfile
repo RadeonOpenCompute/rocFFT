@@ -35,7 +35,7 @@ rocFFTCI:
     rocfft.paths.build_command = './install.sh -c'
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes(['gfx900 && ubuntu', 'gfx906 && centos', 'gfx906 && sles', 'gfx900 && centos7 && hip-clang','gfx906 && ubuntu && hip-clang'], rocfft)
+    def nodes = new dockerNodes(['gfx900 && ubuntu', 'gfx906 && centos', 'gfx900 && sles', 'gfx906 && sles', 'gfx900 && centos7 && hip-clang','gfx906 && ubuntu && hip-clang'], rocfft)
 
     boolean formatCheck = true
 
