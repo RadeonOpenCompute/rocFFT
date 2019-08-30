@@ -18,11 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <algorithm>
-#include <cmath>
+#include <cassert>
 #include <complex>
-#include <cstdio>
-#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -35,10 +32,10 @@ int main(int argc, char* argv[])
     std::cout << "rocFFT complex 1d FFT example\n";
 
     // The problem size
-    const size_t Nx = (argc < 2) ? 8 : atoi(argv[1]);
-    const bool inplace = (argc < 3) ? false : atoi(argv[2]);
+    const size_t Nx      = (argc < 2) ? 8 : atoi(argv[1]);
+    const bool   inplace = (argc < 3) ? false : atoi(argv[2]);
     std::cout << "Nx: " << Nx << "\tin-place: " << inplace << std::endl;
-    
+
     // Initialize data on the host:
     std::cout << "Input:\n";
     std::vector<std::complex<float>> cx(Nx);
@@ -55,60 +52,71 @@ int main(int argc, char* argv[])
     // Create HIP device object and copy data:
     float2* x = NULL;
     hipMalloc(&x, cx.size() * sizeof(decltype(cx)::value_type));
-    float2* y = inplace ? (float2*) x : NULL;
-    if (!inplace)
+    float2* y = inplace ? (float2*)x : NULL;
+    if(!inplace)
     {
         hipMalloc(&y, cx.size() * sizeof(decltype(cx)::value_type));
     }
     hipMemcpy(x, cx.data(), cx.size() * sizeof(decltype(cx)::value_type), hipMemcpyHostToDevice);
 
     rocfft_setup();
-    
+
+    rocfft_status status = rocfft_status_success;
+
     // Create forward plan
     rocfft_plan forward = NULL;
-    rocfft_plan_create(&forward,
-                       inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
-                       rocfft_transform_type_complex_forward,
-                       rocfft_precision_single,
-                       1,     // Dimensions
-                       &Nx,   // lengths
-                       1,     // Number of transforms
-                       NULL); // Description
+    status              = rocfft_plan_create(&forward,
+                                inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
+                                rocfft_transform_type_complex_forward,
+                                rocfft_precision_single,
+                                1, // Dimensions
+                                &Nx, // lengths
+                                1, // Number of transforms
+                                NULL); // Description
+    assert(status == rocfft_status_success);
 
     // We may need work memory, which is passed via rocfft_execution_info
-    rocfft_execution_info forwardinfo;
-    rocfft_execution_info_create(&forwardinfo);
+    rocfft_execution_info forwardinfo = NULL;
+    status                            = rocfft_execution_info_create(&forwardinfo);
+    assert(status == rocfft_status_success);
     size_t fbuffersize = 0;
-    rocfft_plan_get_work_buffer_size(forward, &fbuffersize);
+    status             = rocfft_plan_get_work_buffer_size(forward, &fbuffersize);
+    assert(status == rocfft_status_success);
     void* fbuffer = NULL;
     hipMalloc(&fbuffer, fbuffersize);
-    rocfft_execution_info_set_work_buffer(forwardinfo, fbuffer, fbuffersize);
+    status = rocfft_execution_info_set_work_buffer(forwardinfo, fbuffer, fbuffersize);
+    assert(status == rocfft_status_success);
 
     // Create backward plan
     rocfft_plan backward = NULL;
-    rocfft_plan_create(&backward,
-                       inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
-                       rocfft_transform_type_complex_inverse,
-                       rocfft_precision_single,
-                       1,     // Dimensions
-                       &Nx,   // lengths
-                       1,     // Number of transforms
-                       NULL); // Description
+    status               = rocfft_plan_create(&backward,
+                                inplace ? rocfft_placement_inplace : rocfft_placement_notinplace,
+                                rocfft_transform_type_complex_inverse,
+                                rocfft_precision_single,
+                                1, // Dimensions
+                                &Nx, // lengths
+                                1, // Number of transforms
+                                NULL); // Description
+    assert(status == rocfft_status_success);
 
     // Execution info for the backward transform:
-    rocfft_execution_info backwardinfo;
-    rocfft_execution_info_create(&backwardinfo);
+    rocfft_execution_info backwardinfo = NULL;
+    status                             = rocfft_execution_info_create(&backwardinfo);
+    assert(status == rocfft_status_success);
     size_t bbuffersize = 0;
-    rocfft_plan_get_work_buffer_size(backward, &bbuffersize);
+    status             = rocfft_plan_get_work_buffer_size(backward, &bbuffersize);
+    assert(status == rocfft_status_success);
     void* bbuffer = NULL;
     hipMalloc(&bbuffer, bbuffersize);
-    rocfft_execution_info_set_work_buffer(backwardinfo, bbuffer, bbuffersize);
+    status = rocfft_execution_info_set_work_buffer(backwardinfo, bbuffer, bbuffersize);
+    assert(status == rocfft_status_success);
 
     // Execute the forward transform
-    rocfft_execute(forward,
-                   (void**)&x,   // in_buffer
-                   (void**)&y,   // out_buffer
-                   forwardinfo); // execution info
+    status = rocfft_execute(forward,
+                            (void**)&x, // in_buffer
+                            (void**)&y, // out_buffer
+                            forwardinfo); // execution info
+    assert(status == rocfft_status_success);
 
     // Copy result back to host
     std::vector<std::complex<float>> cy(Nx);
@@ -123,8 +131,8 @@ int main(int argc, char* argv[])
 
     // Execute the backward transform
     rocfft_execute(backward,
-                   (void**)&y,    // in_buffer
-                   (void**)&x,    // out_buffer
+                   (void**)&y, // in_buffer
+                   (void**)&x, // out_buffer
                    backwardinfo); // execution info
 
     std::cout << "Transformed back:\n";
