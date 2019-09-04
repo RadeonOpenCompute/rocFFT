@@ -94,6 +94,7 @@ private:
         , devKernArg(nullptr)
         , inArrayType(rocfft_array_type_unset)
         , outArrayType(rocfft_array_type_unset)
+        , placement(rocfft_placement_inplace)
     {
         if(p != nullptr)
         {

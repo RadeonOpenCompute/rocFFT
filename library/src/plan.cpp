@@ -1225,6 +1225,11 @@ void TreeNode::RecursiveBuildTree()
     // multi-dimension cases and small 2d, 3d within one kernel
     bool MultiDimFuseKernelsAvailable = false;
 
+    if(parent != nullptr)
+    {
+        placement = parent->placement; // inherit from parent as init value, may change after
+    }
+
     if((parent == nullptr)
        && ((inArrayType == rocfft_array_type_real) || (outArrayType == rocfft_array_type_real)))
     {
@@ -1914,9 +1919,17 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer& flipIn,
     case CS_2D_RTRT:
     case CS_3D_RTRT:
     {
-        childNodes[0]->obIn = (parent == nullptr)
-                                  ? (placement == rocfft_placement_inplace) ? obOutBuf : OB_USER_IN
-                                  : obOutBuf;
+        if(parent != nullptr
+           && (parent->scheme == CS_KERNEL_COPY_R_TO_CMPLX
+               || parent->scheme == CS_REAL_TRANSFORM_USING_CMPLX
+               || parent->scheme == CS_KERNEL_COPY_CMPLX_TO_R))
+        {
+            childNodes[0]->obIn = obOutBuf;
+        }
+        else
+        {
+            childNodes[0]->obIn = (placement == rocfft_placement_inplace) ? obOutBuf : OB_USER_IN;
+        }
 
         childNodes[0]->obOut = obOutBuf;
 
@@ -1937,7 +1950,14 @@ void TreeNode::TraverseTreeAssignBuffersLogicA(OperatingBuffer& flipIn,
         childNodes[3]->obIn  = OB_TEMP;
         childNodes[3]->obOut = obOutBuf;
 
-        obIn  = childNodes[0]->obIn;
+        if(parent == nullptr)
+        {
+            obIn = (placement == rocfft_placement_inplace) ? childNodes[3]->obOut : OB_USER_IN;
+        }
+        else
+        {
+            obIn = childNodes[0]->obIn;
+        }
         obOut = childNodes[3]->obOut;
     }
     break;
