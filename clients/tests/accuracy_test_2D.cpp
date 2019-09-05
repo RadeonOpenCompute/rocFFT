@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <math.h>
 #include <stdexcept>
@@ -33,60 +34,20 @@ using ::testing::TestWithParam;
 using ::testing::Values;
 using ::testing::ValuesIn;
 
-class accuracy_test_complex_2D_pow2_single : public ::testing::Test
-{
-protected:
-    accuracy_test_complex_2D_pow2_single() {}
-    virtual ~accuracy_test_complex_2D_pow2_single() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
 
-class accuracy_test_complex_2D_pow2_double : public ::testing::Test
-{
-protected:
-    accuracy_test_complex_2D_pow2_double() {}
-    virtual ~accuracy_test_complex_2D_pow2_double() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
-// 65536=pow(2,16)                                 //8388608 = pow(2,23)
+// Set parameters
 
-#define POW2_RANGE                                        \
-    {2, 4}, {8, 16}, {32, 128}, {256, 512}, {1024, 2048}, \
-    {                                                     \
-        4096, 8192                                        \
-    }
+static std::vector<std::vector<size_t>> pow2_range = { {2, 4}, {8, 16}, {32, 128}, {256, 512},
+                                                       {1024, 2048},  { 4096, 8192 } };
 // The even-length c2r fails 4096x8192.
 // TODO: make test precision vary with problem size, then re-enable.
-#define POW2_RANGE_C2R                      \
-    {2, 4}, {8, 16}, {32, 128}, {256, 512}, \
-    {                                       \
-        1024, 2048                          \
-    }
-
-// malloc fail on 4GB Fiji Nano on the following size
-// {16384, 32768}, {65536, 131072}, {262144, 524288}
-
-#define POW3_RANGE                \
-    {3, 9}, {27, 81}, {243, 729}, \
-    {                             \
-        2187, 6561                \
-    } /* malloc fail on 4GB Fiji Nano on the following size , {19683, 59049},    \
-       {177147, 531441} */
-#define POW5_RANGE \
-    {5, 25}, {125, 625}, {3125, 15625}, /* malloc fail on 4GB Fiji Nano on the   \
-                                         following size , {78125, 390625},     \
-                                         {1953125, 9765625} */
-
-#define PRIME_RANGE \
-    {7, 25}, {11, 625}, {13, 15625}, {1, 11}, {11, 1}, {8191, 243}, {7, 11}, {7, 32}, {1009, 1009},
-
-static std::vector<std::vector<size_t>> pow2_range     = {POW2_RANGE};
-static std::vector<std::vector<size_t>> pow2_range_c2r = {POW2_RANGE_C2R};
-static std::vector<std::vector<size_t>> pow3_range     = {POW3_RANGE};
-static std::vector<std::vector<size_t>> pow5_range     = {POW5_RANGE};
-static std::vector<std::vector<size_t>> prime_range    = {PRIME_RANGE};
+static std::vector<std::vector<size_t>> pow2_range_c2r = { {2, 4}, {8, 16}, {32, 128}, {256, 512},
+                                                           {1024, 2048}};
+static std::vector<std::vector<size_t>> pow3_range = {{3, 9}, {27, 81}, {243, 729}, { 2187, 6561 }};
+static std::vector<std::vector<size_t>> pow5_range     = {{5, 25}, {125, 625}, {3125, 15625}};
+static std::vector<std::vector<size_t>> prime_range    = {{7, 25}, {11, 625}, {13, 15625}, {1, 11},
+                                                          {11, 1}, {8191, 243}, {7, 11}, {7, 32},
+                                                          {1009, 1009}};
 
 static size_t batch_range[] = {1};
 
@@ -100,63 +61,22 @@ static rocfft_transform_type transform_range[]
 
 static data_pattern pattern_range[] = {sawtooth};
 
-static std::vector<std::vector<size_t>> generate_random(size_t number_run)
-{
-    std::vector<std::vector<size_t>> output;
 
-    size_t i, j, k, l, m, n;
-
-    size_t RAND_MAX_NUMBER = 6;
-
-    for(size_t r = 0; r < number_run; r++)
-    {
-        std::vector<size_t> tmp;
-
-        i = (size_t)(rand() % RAND_MAX_NUMBER); // generate a integer number between [0, RAND_MAX-1]
-        j = (size_t)(rand() % RAND_MAX_NUMBER); // generate a integer number between [0, RAND_MAX-1]
-        k = (size_t)(rand() % RAND_MAX_NUMBER); // generate a integer number between [0, RAND_MAX-1]
-
-        size_t value = pow(2, i) * pow(3, j) * pow(5, k);
-        tmp.push_back(value);
-
-        l = (size_t)(rand() % RAND_MAX_NUMBER); // generate a integer number between [0, RAND_MAX-1]
-        m = (size_t)(rand() % RAND_MAX_NUMBER); // generate a integer number between [0, RAND_MAX-1]
-        n = (size_t)(rand() % RAND_MAX_NUMBER); // generate a integer number between [0, RAND_MAX-1]
-
-        value = pow(2, l) * pow(3, m) * pow(5, n);
-
-        tmp.push_back(value);
-
-        output.push_back(tmp);
-    }
-
-    return output;
-}
+// Test suite classes:
 
 class accuracy_test_complex_2D : public ::TestWithParam<std::tuple<std::vector<size_t>,
                                                                    size_t,
                                                                    rocfft_result_placement,
                                                                    rocfft_transform_type,
                                                                    size_t,
-                                                                   data_pattern>>
-{
-protected:
-    accuracy_test_complex_2D() {}
-    virtual ~accuracy_test_complex_2D() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
+                                                                   data_pattern>>{};
+class accuracy_test_real_2D    : public ::TestWithParam<std::tuple<std::vector<size_t>,
+                                                                   size_t,
+                                                                   data_pattern>> {};
 
-class accuracy_test_real_2D
-    : public ::TestWithParam<std::tuple<std::vector<size_t>, size_t, data_pattern>>
-{
-protected:
-    accuracy_test_real_2D() {}
-    virtual ~accuracy_test_real_2D() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
+//  Complex to complex
 
+// Templated test function for complex to complex:
 template <class T, class fftw_T>
 void normal_2D_complex_interleaved_to_complex_interleaved(std::vector<size_t>     lengths,
                                                           size_t                  batch,
@@ -165,11 +85,8 @@ void normal_2D_complex_interleaved_to_complex_interleaved(std::vector<size_t>   
                                                           size_t                  stride,
                                                           data_pattern            pattern)
 {
-    size_t total_size = 1;
-    for(int i = 0; i < lengths.size(); i++)
-    {
-        total_size *= lengths[i];
-    }
+    size_t total_size = std::accumulate(lengths.begin(), lengths.end(), 1,
+                                        std::multiplies<size_t>());
     if(total_size * sizeof(T) * 2 >= 2e8)
     {
         // printf("No test is really launched; MB byte size = %f is too big; will
@@ -202,10 +119,10 @@ void normal_2D_complex_interleaved_to_complex_interleaved(std::vector<size_t>   
                                   in_array_type,
                                   out_array_type,
                                   placeness);
-    usleep(1e4);
 }
 
-//             Complex to Complex
+
+// Implemetation of complex-to-complex tests for float and double:
 
 TEST_P(accuracy_test_complex_2D,
        normal_2D_complex_interleaved_to_complex_interleaved_single_precision)
@@ -250,10 +167,14 @@ TEST_P(accuracy_test_complex_2D,
     }
 }
 
-//             Real to Hermitian
+// Populate test cases from parameter combinations:
 
+
+// Real to complex
+
+// Templated test function for real to complex:
 template <class T, class fftw_T>
-void normal_2D_real_interleaved_to_hermitian_interleaved(std::vector<size_t>     lengths,
+void normal_2D_real_to_hermitian_interleaved(std::vector<size_t>     lengths,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
                                                          rocfft_transform_type   transform_type,
@@ -282,11 +203,11 @@ void normal_2D_real_interleaved_to_hermitian_interleaved(std::vector<size_t>    
                                  in_array_type,
                                  out_array_type,
                                  rocfft_placement_notinplace); // must be non-inplace tranform
-
-    usleep(1e4);
 }
 
-TEST_P(accuracy_test_real_2D, normal_2D_real_interleaved_to_hermitian_interleaved_single_precision)
+// Implemetation of real-to-complex tests for float and double:
+
+TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_single_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -298,7 +219,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_interleaved_to_hermitian_interleave
 
     try
     {
-        normal_2D_real_interleaved_to_hermitian_interleaved<float, fftwf_complex>(
+        normal_2D_real_to_hermitian_interleaved<float, fftwf_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -307,7 +228,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_interleaved_to_hermitian_interleave
     }
 }
 
-TEST_P(accuracy_test_real_2D, normal_2D_real_interleaved_to_hermitian_interleaved_double_precision)
+TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_double_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -319,7 +240,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_interleaved_to_hermitian_interleave
 
     try
     {
-        normal_2D_real_interleaved_to_hermitian_interleaved<double, fftw_complex>(
+        normal_2D_real_to_hermitian_interleaved<double, fftw_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -328,15 +249,17 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_interleaved_to_hermitian_interleave
     }
 }
 
-//             Hermitian to Real
 
+// Hermitian to Real
+
+// Templated test function for complex to real:
 template <class T, class fftw_T>
-void normal_2D_hermitian_interleaved_to_real_interleaved(std::vector<size_t>     lengths,
-                                                         size_t                  batch,
-                                                         rocfft_result_placement placeness,
-                                                         rocfft_transform_type   transform_type,
-                                                         size_t                  stride,
-                                                         data_pattern            pattern)
+void normal_2D_hermitian_interleaved_to_real(std::vector<size_t>     lengths,
+                                             size_t                  batch,
+                                             rocfft_result_placement placeness,
+                                             rocfft_transform_type   transform_type,
+                                             size_t                  stride,
+                                             data_pattern            pattern)
 {
     std::vector<size_t> input_strides;
     std::vector<size_t> output_strides;
@@ -359,11 +282,11 @@ void normal_2D_hermitian_interleaved_to_real_interleaved(std::vector<size_t>    
                                  in_array_type,
                                  out_array_type,
                                  rocfft_placement_notinplace); // must be non-inplace tranform
-
-    usleep(1e4);
 }
 
-TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_interleaved_single_precision)
+// Implemetation of real-to-complex tests for float and double:
+
+TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_single_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -375,7 +298,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_interleave
 
     try
     {
-        normal_2D_hermitian_interleaved_to_real_interleaved<float, fftwf_complex>(
+        normal_2D_hermitian_interleaved_to_real<float, fftwf_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -384,7 +307,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_interleave
     }
 }
 
-TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_interleaved_double_precision)
+TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_double_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -396,7 +319,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_interleave
 
     try
     {
-        normal_2D_hermitian_interleaved_to_real_interleaved<double, fftw_complex>(
+        normal_2D_hermitian_interleaved_to_real<double, fftw_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -405,12 +328,8 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_interleave
     }
 }
 
-// Values is for a single item; ValuesIn is for an array
-// ValuesIn take each element (a vector) and combine them and feed them to
-// test_p
 
-// COMPLEX TO COMPLEX
-
+// Complex-to-complex and real-to-complex:
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_2D,
                         accuracy_test_complex_2D,
                         Combine(ValuesIn(pow2_range),
@@ -447,7 +366,8 @@ INSTANTIATE_TEST_CASE_P(rocfft_prime_2D,
                                 ValuesIn(stride_range),
                                 ValuesIn(pattern_range)));
 
-// REAL  HERMITIAN
+
+// Complex to real:
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_2D,
                         accuracy_test_real_2D,
                         Combine(ValuesIn(pow2_range_c2r),
