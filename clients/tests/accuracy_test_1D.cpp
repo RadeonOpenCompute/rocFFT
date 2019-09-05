@@ -1,24 +1,22 @@
-/******************************************************************************
-* Copyright (c) 2016 - present Advanced Micro Devices, Inc. All rights reserved.
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-* THE SOFTWARE.
-*******************************************************************************/
+// Copyright (c) 2016 - present Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
 #include <gtest/gtest.h>
 #include <math.h>
@@ -29,15 +27,12 @@
 #include "fftw_transform.h"
 #include "rocfft.h"
 #include "rocfft_against_fftw.h"
-#include "test_constants.h"
 
 using ::testing::Combine;
 using ::testing::TestWithParam;
 using ::testing::Values;
 using ::testing::ValuesIn;
 
-/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
-/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 class accuracy_test_complex_pow2_single : public ::testing::Test
 {
 protected:
@@ -47,8 +42,6 @@ protected:
     virtual void TearDown() {}
 };
 
-/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
-/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 class accuracy_test_complex_pow2_double : public ::testing::Test
 {
 protected:
@@ -173,9 +166,7 @@ void normal_1D_complex_interleaved_to_complex_interleaved(size_t                
     usleep(1e4);
 }
 
-// *****************************************************
 //             Complex to Complex
-// *****************************************************
 
 TEST_P(accuracy_test_complex, normal_1D_complex_interleaved_to_complex_interleaved_single_precision)
 {
@@ -215,9 +206,7 @@ TEST_P(accuracy_test_complex, normal_1D_complex_interleaved_to_complex_interleav
     }
 }
 
-// *****************************************************
 //             Real to Hermitian
-// *****************************************************
 
 template <class T, class fftw_T>
 void normal_1D_real_interleaved_to_hermitian_interleaved(size_t                  N,
@@ -294,9 +283,7 @@ TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_d
     }
 }
 
-// *****************************************************
 //             Hermitian to Real
-// *****************************************************
 
 template <class T, class fftw_T>
 void normal_1D_hermitian_interleaved_to_real_interleaved(size_t                  N,
@@ -376,9 +363,8 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_d
 // Values is for a single item; ValuesIn is for an array
 // ValuesIn take each element (a vector) and combine them and feed them to
 // test_p
-// *****************************************************
+
 // COMPLEX TO COMPLEX
-// *****************************************************
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_1D,
                         accuracy_test_complex,
                         Combine(ValuesIn(pow2_range),
@@ -427,9 +413,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_prime_1D,
                                 ValuesIn(transform_range),
                                 ValuesIn(stride_range)));
 
-// *****************************************************
 // REAL HERMITIAN
-// *****************************************************
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_1D,
                         accuracy_test_real,
                         Combine(ValuesIn(pow2_range),
@@ -460,8 +444,6 @@ INSTANTIATE_TEST_CASE_P(rocfft_prime_1D,
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range)));
 
-// *****************************************************
-// *****************************************************
 // TESTS disabled by default since they take a long time to execute
 // TO enable this tests
 // 1. make sure ENV CLFFT_REQUEST_LIB_NOMEMALLOC=1
