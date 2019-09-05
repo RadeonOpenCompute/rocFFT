@@ -28,28 +28,8 @@
 #include "rocfft.h"
 #include "rocfft_against_fftw.h"
 
-using ::testing::Combine;
-using ::testing::TestWithParam;
-using ::testing::Values;
 using ::testing::ValuesIn;
 
-class accuracy_test_complex_pow2_single : public ::testing::Test
-{
-protected:
-    accuracy_test_complex_pow2_single() {}
-    virtual ~accuracy_test_complex_pow2_single() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
-
-class accuracy_test_complex_pow2_double : public ::testing::Test
-{
-protected:
-    accuracy_test_complex_pow2_double() {}
-    virtual ~accuracy_test_complex_pow2_double() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
 
 static std::vector<size_t> pow2_range  = {2, 4, 8, 16, 32, 128, 256, 512, 1024, 2048, 4096,
                                           8192, 16384, 32768, 65536, 131072, 262144, 524288,
@@ -75,6 +55,9 @@ static rocfft_result_placement placeness_range[]
 static rocfft_transform_type transform_range[]
     = {rocfft_transform_type_complex_forward, rocfft_transform_type_complex_inverse};
 
+
+
+
 static std::vector<size_t> generate_random(size_t number_run)
 {
     std::vector<size_t> output;
@@ -90,26 +73,17 @@ static std::vector<size_t> generate_random(size_t number_run)
     return output;
 }
 
-class accuracy_test_complex
-    : public ::TestWithParam<
-          std::tuple<size_t, size_t, rocfft_result_placement, rocfft_transform_type, size_t>>
-{
-protected:
-    accuracy_test_complex() {}
-    virtual ~accuracy_test_complex() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
+class accuracy_test_complex: public ::testing::TestWithParam<std::tuple<size_t,
+                                                               size_t,
+                                                               rocfft_result_placement,
+                                                               rocfft_transform_type,
+                                                               size_t>>
+{};
 
-class accuracy_test_real
-    : public ::TestWithParam<std::tuple<size_t, size_t, rocfft_result_placement>>
-{
-protected:
-    accuracy_test_real() {}
-    virtual ~accuracy_test_real() {}
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-};
+class accuracy_test_real : public ::testing::TestWithParam<std::tuple<size_t,
+                                                             size_t,
+                                                             rocfft_result_placement>>
+{};
 
 template <class T, class fftw_T>
 void normal_1D_complex_interleaved_to_complex_interleaved(size_t                  N,
@@ -147,7 +121,8 @@ void normal_1D_complex_interleaved_to_complex_interleaved(size_t                
 
 // Complex to Complex
 
-TEST_P(accuracy_test_complex, normal_1D_complex_interleaved_to_complex_interleaved_single_precision)
+TEST_P(accuracy_test_complex,
+             normal_1D_complex_interleaved_to_complex_interleaved_single_precision)
 {
     size_t                  N              = std::get<0>(GetParam());
     size_t                  batch          = std::get<1>(GetParam());
@@ -166,7 +141,8 @@ TEST_P(accuracy_test_complex, normal_1D_complex_interleaved_to_complex_interleav
     }
 }
 
-TEST_P(accuracy_test_complex, normal_1D_complex_interleaved_to_complex_interleaved_double_precision)
+TEST_P(accuracy_test_complex,
+             normal_1D_complex_interleaved_to_complex_interleaved_double_precision)
 {
     size_t                  N              = std::get<0>(GetParam());
     size_t                  batch          = std::get<1>(GetParam());
@@ -186,10 +162,10 @@ TEST_P(accuracy_test_complex, normal_1D_complex_interleaved_to_complex_interleav
 }
 
 
-// Real to Hermitian
+// Real to complex
 
 template <class T, class fftw_T>
-void normal_1D_real_interleaved_to_hermitian_interleaved(size_t                  N,
+void normal_1D_real_to_hermitian_interleaved(size_t                  N,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
                                                          rocfft_transform_type   transform_type,
@@ -221,7 +197,7 @@ void normal_1D_real_interleaved_to_hermitian_interleaved(size_t                 
                                  rocfft_placement_notinplace); // must be non-inplace tranform
 }
 
-TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_single_precision)
+TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_single_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -232,7 +208,7 @@ TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_s
 
     try
     {
-        normal_1D_real_interleaved_to_hermitian_interleaved<float, fftwf_complex>(
+        normal_1D_real_to_hermitian_interleaved<float, fftwf_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -241,7 +217,7 @@ TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_s
     }
 }
 
-TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_double_precision)
+TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_double_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -252,7 +228,7 @@ TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_d
 
     try
     {
-        normal_1D_real_interleaved_to_hermitian_interleaved<double, fftw_complex>(
+        normal_1D_real_to_hermitian_interleaved<double, fftw_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -262,10 +238,10 @@ TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_d
 }
 
 
-// Hermitian to Real
+// Complex to Real
 
 template <class T, class fftw_T>
-void normal_1D_hermitian_interleaved_to_real_interleaved(size_t                  N,
+void normal_1D_hermitian_interleaved_to_real(size_t                  N,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
                                                          rocfft_transform_type   transform_type,
@@ -297,7 +273,7 @@ void normal_1D_hermitian_interleaved_to_real_interleaved(size_t                 
                                  rocfft_placement_notinplace); // must be non-inplace tranform
 }
 
-TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_single_precision)
+TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_single_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -308,7 +284,7 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_s
 
     try
     {
-        normal_1D_hermitian_interleaved_to_real_interleaved<float, fftwf_complex>(
+        normal_1D_hermitian_interleaved_to_real<float, fftwf_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -317,7 +293,7 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_s
     }
 }
 
-TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_double_precision)
+TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_double_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -328,7 +304,7 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_d
 
     try
     {
-        normal_1D_hermitian_interleaved_to_real_interleaved<double, fftw_complex>(
+        normal_1D_hermitian_interleaved_to_real<double, fftw_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -336,15 +312,11 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_d
         handle_exception(err);
     }
 }
-
-// Values is for a single item; ValuesIn is for an array
-// ValuesIn take each element (a vector) and combine them and feed them to
-// test_p
 
 // COMPLEX TO COMPLEX
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_1D,
                         accuracy_test_complex,
-                        Combine(ValuesIn(pow2_range),
+                        ::testing::Combine(ValuesIn(pow2_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -352,7 +324,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow2_1D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow3_1D,
                         accuracy_test_complex,
-                        Combine(ValuesIn(pow3_range),
+                        ::testing::Combine(ValuesIn(pow3_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -360,7 +332,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow3_1D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow5_1D,
                         accuracy_test_complex,
-                        Combine(ValuesIn(pow5_range),
+                        ::testing::Combine(ValuesIn(pow5_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -368,7 +340,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow5_1D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow_mix_1D,
                         accuracy_test_complex,
-                        Combine(ValuesIn(mix_range),
+                        ::testing::Combine(ValuesIn(mix_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -376,7 +348,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow_mix_1D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow_random_1D,
                         accuracy_test_complex,
-                        Combine(ValuesIn(generate_random(20)),
+                        ::testing::Combine(ValuesIn(generate_random(20)),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -384,7 +356,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow_random_1D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_prime_1D,
                         accuracy_test_complex,
-                        Combine(ValuesIn(prime_range),
+                        ::testing::Combine(ValuesIn(prime_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -393,31 +365,31 @@ INSTANTIATE_TEST_CASE_P(rocfft_prime_1D,
 // REAL HERMITIAN
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_1D,
                         accuracy_test_real,
-                        Combine(ValuesIn(pow2_range),
+                        ::testing::Combine(ValuesIn(pow2_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range)));
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow3_1D,
                         accuracy_test_real,
-                        Combine(ValuesIn(pow3_range),
+                        ::testing::Combine(ValuesIn(pow3_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range)));
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow5_1D,
                         accuracy_test_real,
-                        Combine(ValuesIn(pow5_range),
+                        ::testing::Combine(ValuesIn(pow5_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range)));
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow_mix_1D,
                         accuracy_test_real,
-                        Combine(ValuesIn(mix_range),
+                        ::testing::Combine(ValuesIn(mix_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range)));
 
 INSTANTIATE_TEST_CASE_P(rocfft_prime_1D,
                         accuracy_test_real,
-                        Combine(ValuesIn(prime_range),
+                        ::testing::Combine(ValuesIn(prime_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range)));
 
@@ -428,6 +400,11 @@ INSTANTIATE_TEST_CASE_P(rocfft_prime_1D,
 
 #define CLFFT_TEST_HUGE
 #ifdef CLFFT_TEST_HUGE
+
+class accuracy_test_complex_pow2_single : public ::testing::Test {};
+
+class accuracy_test_complex_pow2_double : public ::testing::Test {};
+
 
 #define HUGE_TEST_MAKE(test_name, len, bat)                                              \
     template <class T, class fftw_T>                                                     \

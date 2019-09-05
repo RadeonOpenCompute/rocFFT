@@ -29,9 +29,6 @@
 #include "rocfft.h"
 #include "rocfft_against_fftw.h"
 
-using ::testing::Combine;
-using ::testing::TestWithParam;
-using ::testing::Values;
 using ::testing::ValuesIn;
 
 
@@ -64,13 +61,13 @@ static data_pattern pattern_range[] = {sawtooth};
 
 // Test suite classes:
 
-class accuracy_test_complex_2D : public ::TestWithParam<std::tuple<std::vector<size_t>,
+class accuracy_test_complex_2D : public ::testing::TestWithParam<std::tuple<std::vector<size_t>,
                                                                    size_t,
                                                                    rocfft_result_placement,
                                                                    rocfft_transform_type,
                                                                    size_t,
                                                                    data_pattern>>{};
-class accuracy_test_real_2D    : public ::TestWithParam<std::tuple<std::vector<size_t>,
+class accuracy_test_real_2D    : public ::testing::TestWithParam<std::tuple<std::vector<size_t>,
                                                                    size_t,
                                                                    data_pattern>> {};
 
@@ -329,10 +326,11 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_double_pre
 }
 
 
-// Complex-to-complex and real-to-complex:
+
+// Complex-to-complex:
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_2D,
                         accuracy_test_complex_2D,
-                        Combine(ValuesIn(pow2_range),
+                        ::testing::Combine(ValuesIn(pow2_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -341,7 +339,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow2_2D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow3_2D,
                         accuracy_test_complex_2D,
-                        Combine(ValuesIn(pow3_range),
+                        ::testing::Combine(ValuesIn(pow3_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -350,7 +348,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow3_2D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow5_2D,
                         accuracy_test_complex_2D,
-                        Combine(ValuesIn(pow5_range),
+                        ::testing::Combine(ValuesIn(pow5_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -359,7 +357,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_pow5_2D,
 
 INSTANTIATE_TEST_CASE_P(rocfft_prime_2D,
                         accuracy_test_complex_2D,
-                        Combine(ValuesIn(prime_range),
+                        ::testing::Combine(ValuesIn(prime_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(placeness_range),
                                 ValuesIn(transform_range),
@@ -367,21 +365,27 @@ INSTANTIATE_TEST_CASE_P(rocfft_prime_2D,
                                 ValuesIn(pattern_range)));
 
 
-// Complex to real:
+// Complex to real and real-to-complex:
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_2D,
                         accuracy_test_real_2D,
-                        Combine(ValuesIn(pow2_range_c2r),
+                        ::testing::Combine(ValuesIn(pow2_range_c2r),
                                 ValuesIn(batch_range),
                                 ValuesIn(pattern_range)));
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow3_2D,
                         accuracy_test_real_2D,
-                        Combine(ValuesIn(pow3_range),
+                        ::testing::Combine(ValuesIn(pow3_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(pattern_range)));
 
 INSTANTIATE_TEST_CASE_P(rocfft_pow5_2D,
                         accuracy_test_real_2D,
-                        Combine(ValuesIn(pow5_range),
+                        ::testing::Combine(ValuesIn(pow5_range),
+                                ValuesIn(batch_range),
+                                ValuesIn(pattern_range)));
+
+INSTANTIATE_TEST_CASE_P(rocfft_prime_2D,
+                        accuracy_test_real_2D,
+                        ::testing::Combine(ValuesIn(pow5_range),
                                 ValuesIn(batch_range),
                                 ValuesIn(pattern_range)));
