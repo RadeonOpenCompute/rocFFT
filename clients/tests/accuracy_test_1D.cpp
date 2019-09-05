@@ -165,7 +165,7 @@ TEST_P(accuracy_test_complex,
 // Real to complex
 
 template <class T, class fftw_T>
-void normal_1D_real_to_hermitian_interleaved(size_t                  N,
+void normal_1D_real_to_complex_interleaved(size_t                  N,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
                                                          rocfft_transform_type   transform_type,
@@ -184,7 +184,7 @@ void normal_1D_real_to_hermitian_interleaved(size_t                  N,
     rocfft_array_type out_array_type  = rocfft_array_type_hermitian_interleaved;
 
     data_pattern pattern = sawtooth;
-    real_to_hermitian<T, fftw_T>(pattern,
+    real_to_complex<T, fftw_T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -197,7 +197,7 @@ void normal_1D_real_to_hermitian_interleaved(size_t                  N,
                                  rocfft_placement_notinplace); // must be non-inplace tranform
 }
 
-TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_single_precision)
+TEST_P(accuracy_test_real, normal_1D_real_to_complex_interleaved_single_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -208,7 +208,7 @@ TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_single_precis
 
     try
     {
-        normal_1D_real_to_hermitian_interleaved<float, fftwf_complex>(
+        normal_1D_real_to_complex_interleaved<float, fftwf_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -217,7 +217,7 @@ TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_single_precis
     }
 }
 
-TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_double_precision)
+TEST_P(accuracy_test_real, normal_1D_real_to_complex_interleaved_double_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -228,7 +228,7 @@ TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_double_precis
 
     try
     {
-        normal_1D_real_to_hermitian_interleaved<double, fftw_complex>(
+        normal_1D_real_to_complex_interleaved<double, fftw_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -241,7 +241,7 @@ TEST_P(accuracy_test_real, normal_1D_real_to_hermitian_interleaved_double_precis
 // Complex to Real
 
 template <class T, class fftw_T>
-void normal_1D_hermitian_interleaved_to_real(size_t                  N,
+void normal_1D_complex_interleaved_to_real(size_t                  N,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
                                                          rocfft_transform_type   transform_type,
@@ -260,7 +260,7 @@ void normal_1D_hermitian_interleaved_to_real(size_t                  N,
     rocfft_array_type out_array_type  = rocfft_array_type_real;
 
     data_pattern pattern = sawtooth;
-    hermitian_to_real<T, fftw_T>(pattern,
+    complex_to_real<T, fftw_T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -273,7 +273,7 @@ void normal_1D_hermitian_interleaved_to_real(size_t                  N,
                                  rocfft_placement_notinplace); // must be non-inplace tranform
 }
 
-TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_single_precision)
+TEST_P(accuracy_test_real, normal_1D_complex_interleaved_to_real_single_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -284,7 +284,7 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_single_precis
 
     try
     {
-        normal_1D_hermitian_interleaved_to_real<float, fftwf_complex>(
+        normal_1D_complex_interleaved_to_real<float, fftwf_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -293,7 +293,7 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_single_precis
     }
 }
 
-TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_double_precision)
+TEST_P(accuracy_test_real, normal_1D_complex_interleaved_to_real_double_precision)
 {
     size_t                  N         = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -304,7 +304,7 @@ TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_double_precis
 
     try
     {
-        normal_1D_hermitian_interleaved_to_real<double, fftw_complex>(
+        normal_1D_complex_interleaved_to_real<double, fftw_complex>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -362,7 +362,7 @@ INSTANTIATE_TEST_CASE_P(rocfft_prime_1D,
                                 ValuesIn(transform_range),
                                 ValuesIn(stride_range)));
 
-// REAL HERMITIAN
+// Real/complex
 INSTANTIATE_TEST_CASE_P(rocfft_pow2_1D,
                         accuracy_test_real,
                         ::testing::Combine(ValuesIn(pow2_range),

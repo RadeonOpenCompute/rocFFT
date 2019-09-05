@@ -25,7 +25,6 @@
 #include "buffer.h"
 #include <fftw3.h>
 #include <vector>
-// only buffer interface need rocfft variable
 
 enum fftw_direction
 {

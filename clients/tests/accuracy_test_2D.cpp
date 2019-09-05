@@ -171,7 +171,7 @@ TEST_P(accuracy_test_complex_2D,
 
 // Templated test function for real to complex:
 template <class T, class fftw_T>
-void normal_2D_real_to_hermitian_interleaved(std::vector<size_t>     lengths,
+void normal_2D_real_to_complex_interleaved(std::vector<size_t>     lengths,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
                                                          rocfft_transform_type   transform_type,
@@ -189,7 +189,7 @@ void normal_2D_real_to_hermitian_interleaved(std::vector<size_t>     lengths,
     rocfft_array_type in_array_type   = rocfft_array_type_real;
     rocfft_array_type out_array_type  = rocfft_array_type_hermitian_interleaved;
 
-    real_to_hermitian<T, fftw_T>(pattern,
+    real_to_complex<T, fftw_T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -204,7 +204,7 @@ void normal_2D_real_to_hermitian_interleaved(std::vector<size_t>     lengths,
 
 // Implemetation of real-to-complex tests for float and double:
 
-TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_single_precision)
+TEST_P(accuracy_test_real_2D, normal_2D_real_to_complex_interleaved_single_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -216,7 +216,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_single_pre
 
     try
     {
-        normal_2D_real_to_hermitian_interleaved<float, fftwf_complex>(
+        normal_2D_real_to_complex_interleaved<float, fftwf_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -225,7 +225,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_single_pre
     }
 }
 
-TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_double_precision)
+TEST_P(accuracy_test_real_2D, normal_2D_real_to_complex_interleaved_double_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -237,7 +237,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_double_pre
 
     try
     {
-        normal_2D_real_to_hermitian_interleaved<double, fftw_complex>(
+        normal_2D_real_to_complex_interleaved<double, fftw_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -247,11 +247,11 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_to_hermitian_interleaved_double_pre
 }
 
 
-// Hermitian to Real
+// Complex to teal
 
 // Templated test function for complex to real:
 template <class T, class fftw_T>
-void normal_2D_hermitian_interleaved_to_real(std::vector<size_t>     lengths,
+void normal_2D_complex_interleaved_to_real(std::vector<size_t>     lengths,
                                              size_t                  batch,
                                              rocfft_result_placement placeness,
                                              rocfft_transform_type   transform_type,
@@ -268,7 +268,7 @@ void normal_2D_hermitian_interleaved_to_real(std::vector<size_t>     lengths,
     rocfft_array_type in_array_type   = rocfft_array_type_hermitian_interleaved;
     rocfft_array_type out_array_type  = rocfft_array_type_real;
 
-    hermitian_to_real<T, fftw_T>(pattern,
+    complex_to_real<T, fftw_T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -283,7 +283,7 @@ void normal_2D_hermitian_interleaved_to_real(std::vector<size_t>     lengths,
 
 // Implemetation of real-to-complex tests for float and double:
 
-TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_single_precision)
+TEST_P(accuracy_test_real_2D, normal_2D_complex_interleaved_to_real_single_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -295,7 +295,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_single_pre
 
     try
     {
-        normal_2D_hermitian_interleaved_to_real<float, fftwf_complex>(
+        normal_2D_complex_interleaved_to_real<float, fftwf_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -304,7 +304,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_single_pre
     }
 }
 
-TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_double_precision)
+TEST_P(accuracy_test_real_2D, normal_2D_complex_interleaved_to_real_double_precision)
 {
     std::vector<size_t>     lengths   = std::get<0>(GetParam());
     size_t                  batch     = std::get<1>(GetParam());
@@ -316,7 +316,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_hermitian_interleaved_to_real_double_pre
 
     try
     {
-        normal_2D_hermitian_interleaved_to_real<double, fftw_complex>(
+        normal_2D_complex_interleaved_to_real<double, fftw_complex>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)

@@ -102,13 +102,13 @@ void complex_to_complex(data_pattern            pattern,
     EXPECT_EQ(true, test_fft.result() == reference.result());
 }
 
-//           Real to Hermitian
+// Real to complex
 
 // dimension is inferred from lengths.size()
 // tightly packed is inferred from strides.empty()
 // input layout is always real
 template <class T, class fftw_T>
-void real_to_hermitian(data_pattern            pattern,
+void real_to_complex(data_pattern            pattern,
                        rocfft_transform_type   transform_type,
                        std::vector<size_t>     lengths,
                        size_t                  batch,
@@ -150,7 +150,7 @@ void real_to_hermitian(data_pattern            pattern,
         test_fft.set_data_to_random();
         break;
     default:
-        throw std::runtime_error("invalid pattern type in real_to_hermitian()");
+        throw std::runtime_error("invalid pattern type in real_to_complex");
     }
 
     reference.set_data_to_buffer(test_fft.input_buffer());
@@ -164,13 +164,13 @@ void real_to_hermitian(data_pattern            pattern,
     EXPECT_EQ(true, test_fft.result() == reference.result());
 }
 
-//           Hermitian to Real
+// Complex to real
 
 // dimension is inferred from lengths.size()
 // tightly packed is inferred from strides.empty()
-// input layout is always hermitian
+// input layout is always complex
 template <class T, class fftw_T>
-void hermitian_to_real(data_pattern            pattern,
+void complex_to_real(data_pattern            pattern,
                        rocfft_transform_type   transform_type,
                        std::vector<size_t>     lengths,
                        size_t                  batch,
@@ -183,7 +183,7 @@ void hermitian_to_real(data_pattern            pattern,
                        rocfft_result_placement placeness,
                        T                       scale = 1.0f)
 {
-    // will perform a real to hermitian first
+    // will perform a real to complex first
     fftw<T, fftw_T> data_maker(lengths, batch, output_strides, input_strides, placeness, r2c);
 
     switch(pattern)
@@ -201,7 +201,7 @@ void hermitian_to_real(data_pattern            pattern,
         data_maker.set_data_to_random();
         break;
     default:
-        throw std::runtime_error("invalid pattern type in hermitian_to_real()");
+        throw std::runtime_error("invalid pattern type in complex_to_real()");
     }
 
     data_maker.transform();
