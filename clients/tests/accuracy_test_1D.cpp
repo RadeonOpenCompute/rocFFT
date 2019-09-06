@@ -85,7 +85,7 @@ class accuracy_test_real : public ::testing::TestWithParam<std::tuple<size_t,
                                                              rocfft_result_placement>>
 {};
 
-template <class T, class fftw_T>
+template <class T>
 void normal_1D_complex_interleaved_to_complex_interleaved(size_t                  N,
                                                           size_t                  batch,
                                                           rocfft_result_placement placeness,
@@ -106,17 +106,17 @@ void normal_1D_complex_interleaved_to_complex_interleaved(size_t                
     rocfft_array_type out_array_type  = rocfft_array_type_complex_interleaved;
 
     data_pattern pattern = sawtooth;
-    complex_to_complex<T, fftw_T>(pattern,
-                                  transform_type,
-                                  lengths,
-                                  batch,
-                                  input_strides,
-                                  output_strides,
-                                  input_distance,
-                                  output_distance,
-                                  in_array_type,
-                                  out_array_type,
-                                  placeness);
+    complex_to_complex<T>(pattern,
+                          transform_type,
+                          lengths,
+                          batch,
+                          input_strides,
+                          output_strides,
+                          input_distance,
+                          output_distance,
+                          in_array_type,
+                          out_array_type,
+                          placeness);
 }
 
 // Complex to Complex
@@ -132,7 +132,7 @@ TEST_P(accuracy_test_complex,
 
     try
     {
-        normal_1D_complex_interleaved_to_complex_interleaved<float, fftwf_complex>(
+        normal_1D_complex_interleaved_to_complex_interleaved<float>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -152,7 +152,7 @@ TEST_P(accuracy_test_complex,
 
     try
     {
-        normal_1D_complex_interleaved_to_complex_interleaved<double, fftw_complex>(
+        normal_1D_complex_interleaved_to_complex_interleaved<double>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -164,7 +164,7 @@ TEST_P(accuracy_test_complex,
 
 // Real to complex
 
-template <class T, class fftw_T>
+template <class T>
 void normal_1D_real_to_complex_interleaved(size_t                  N,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
@@ -184,7 +184,7 @@ void normal_1D_real_to_complex_interleaved(size_t                  N,
     rocfft_array_type out_array_type  = rocfft_array_type_hermitian_interleaved;
 
     data_pattern pattern = sawtooth;
-    real_to_complex<T, fftw_T>(pattern,
+    real_to_complex<T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -208,7 +208,7 @@ TEST_P(accuracy_test_real, normal_1D_real_to_complex_interleaved_single_precisio
 
     try
     {
-        normal_1D_real_to_complex_interleaved<float, fftwf_complex>(
+        normal_1D_real_to_complex_interleaved<float>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -228,7 +228,7 @@ TEST_P(accuracy_test_real, normal_1D_real_to_complex_interleaved_double_precisio
 
     try
     {
-        normal_1D_real_to_complex_interleaved<double, fftw_complex>(
+        normal_1D_real_to_complex_interleaved<double>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -240,7 +240,7 @@ TEST_P(accuracy_test_real, normal_1D_real_to_complex_interleaved_double_precisio
 
 // Complex to Real
 
-template <class T, class fftw_T>
+template <class T>
 void normal_1D_complex_interleaved_to_real(size_t                  N,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
@@ -260,7 +260,7 @@ void normal_1D_complex_interleaved_to_real(size_t                  N,
     rocfft_array_type out_array_type  = rocfft_array_type_real;
 
     data_pattern pattern = sawtooth;
-    complex_to_real<T, fftw_T>(pattern,
+    complex_to_real<T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -284,7 +284,7 @@ TEST_P(accuracy_test_real, normal_1D_complex_interleaved_to_real_single_precisio
 
     try
     {
-        normal_1D_complex_interleaved_to_real<float, fftwf_complex>(
+        normal_1D_complex_interleaved_to_real<float>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -304,7 +304,7 @@ TEST_P(accuracy_test_real, normal_1D_complex_interleaved_to_real_double_precisio
 
     try
     {
-        normal_1D_complex_interleaved_to_real<double, fftw_complex>(
+        normal_1D_complex_interleaved_to_real<double>(
             N, batch, placeness, transform_type, stride);
     }
     catch(const std::exception& err)
@@ -407,7 +407,7 @@ class accuracy_test_complex_pow2_double : public ::testing::Test {};
 
 
 #define HUGE_TEST_MAKE(test_name, len, bat)                                              \
-    template <class T, class fftw_T>                                                     \
+    template <class T>                                                     \
     void test_name()                                                                     \
     {                                                                                    \
         std::vector<size_t> lengths;                                                     \
@@ -424,7 +424,7 @@ class accuracy_test_complex_pow2_double : public ::testing::Test {};
         rocfft_transform_type   transform_type  = rocfft_transform_type_complex_forward; \
                                                                                          \
         data_pattern pattern = sawtooth;                                                 \
-        complex_to_complex<T, fftw_T>(pattern,                                           \
+        complex_to_complex<T>(pattern,                                           \
                                       transform_type,                                    \
                                       lengths,                                           \
                                       batch,                                             \
@@ -445,7 +445,7 @@ class accuracy_test_complex_pow2_double : public ::testing::Test {};
     {                                                    \
         try                                              \
         {                                                \
-            test_name<float, fftwf_complex>();           \
+            test_name<float>();           \
         }                                                \
         catch(const std::exception& err)                 \
         {                                                \
@@ -461,7 +461,7 @@ class accuracy_test_complex_pow2_double : public ::testing::Test {};
     {                                                    \
         try                                              \
         {                                                \
-            test_name<double, fftw_complex>();           \
+            test_name<double>();           \
         }                                                \
         catch(const std::exception& err)                 \
         {                                                \

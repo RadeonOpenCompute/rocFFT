@@ -28,10 +28,28 @@
 #include "rocfft_transform.h"
 
 
-//           Complex to Complex
+// C++ traits to translate float->fftwf_complex and
+// double->fftw_complex.
+// The correct FFTW complex type can be accessed via, for example,
+// using complex_t = typename fftwtrait<Tfloat>::complex_t;
+template <typename Tfloat> struct fftwtrait;
+template <>
+struct fftwtrait<float>
+{
+public:
+    using complex_t = fftwf_complex;
+};
+template <>
+struct fftwtrait<double>
+{
+public:
+    using complex_t = fftw_complex;
+};
+
+// Complex to Complex
 // dimension is inferred from lengths.size()
 // tightly packed is inferred from strides.empty()
-template <class T, class fftw_T>
+template <class Tfloat>
 void complex_to_complex(data_pattern            pattern,
                         rocfft_transform_type   transform_type,
                         std::vector<size_t>     lengths,
@@ -43,10 +61,10 @@ void complex_to_complex(data_pattern            pattern,
                         rocfft_array_type       in_array_type,
                         rocfft_array_type       out_array_type,
                         rocfft_result_placement placeness,
-                        T                       scale = 1.0f)
+                        Tfloat                       scale = 1.0f)
 {
-
-    rocfft<T> test_fft(lengths,
+    using complex_t = typename fftwtrait<Tfloat>::complex_t;
+    rocfft<Tfloat> test_fft(lengths,
                        batch,
                        input_strides,
                        output_strides,
@@ -58,7 +76,7 @@ void complex_to_complex(data_pattern            pattern,
                        transform_type,
                        scale);
 
-    fftw<T, fftw_T> reference(lengths, batch, input_strides, output_strides, placeness, c2c);
+    fftw<Tfloat, complex_t> reference(lengths, batch, input_strides, output_strides, placeness, c2c);
 
     switch(pattern)
     {
@@ -107,7 +125,7 @@ void complex_to_complex(data_pattern            pattern,
 // dimension is inferred from lengths.size()
 // tightly packed is inferred from strides.empty()
 // input layout is always real
-template <class T, class fftw_T>
+template <class Tfloat>
 void real_to_complex(data_pattern            pattern,
                        rocfft_transform_type   transform_type,
                        std::vector<size_t>     lengths,
@@ -119,9 +137,9 @@ void real_to_complex(data_pattern            pattern,
                        rocfft_array_type       in_array_type,
                        rocfft_array_type       out_array_type,
                        rocfft_result_placement placeness,
-                       T                       scale = 1.0f)
+                       Tfloat                       scale = 1.0f)
 {
-    rocfft<T> test_fft(lengths,
+    rocfft<Tfloat> test_fft(lengths,
                        batch,
                        input_strides,
                        output_strides,
@@ -133,7 +151,8 @@ void real_to_complex(data_pattern            pattern,
                        transform_type,
                        scale);
 
-    fftw<T, fftw_T> reference(lengths, batch, input_strides, output_strides, placeness, r2c);
+    using complex_t = typename fftwtrait<Tfloat>::complex_t;
+    fftw<Tfloat, complex_t> reference(lengths, batch, input_strides, output_strides, placeness, r2c);
 
     switch(pattern)
     {
@@ -169,7 +188,7 @@ void real_to_complex(data_pattern            pattern,
 // dimension is inferred from lengths.size()
 // tightly packed is inferred from strides.empty()
 // input layout is always complex
-template <class T, class fftw_T>
+template <class Tfloat>
 void complex_to_real(data_pattern            pattern,
                        rocfft_transform_type   transform_type,
                        std::vector<size_t>     lengths,
@@ -181,10 +200,11 @@ void complex_to_real(data_pattern            pattern,
                        rocfft_array_type       in_array_type,
                        rocfft_array_type       out_array_type,
                        rocfft_result_placement placeness,
-                       T                       scale = 1.0f)
+                     Tfloat                       scale = 1.0f)
 {
     // will perform a real to complex first
-    fftw<T, fftw_T> data_maker(lengths, batch, output_strides, input_strides, placeness, r2c);
+    using complex_t = typename fftwtrait<Tfloat>::complex_t;
+    fftw<Tfloat, complex_t> data_maker(lengths, batch, output_strides, input_strides, placeness, r2c);
 
     switch(pattern)
     {
@@ -206,7 +226,7 @@ void complex_to_real(data_pattern            pattern,
 
     data_maker.transform();
 
-    rocfft<T> test_fft(lengths,
+    rocfft<Tfloat> test_fft(lengths,
                        batch,
                        input_strides,
                        output_strides,
@@ -219,7 +239,7 @@ void complex_to_real(data_pattern            pattern,
                        scale);
     test_fft.set_data_to_buffer(data_maker.result());
 
-    fftw<T, fftw_T> reference(lengths, batch, input_strides, output_strides, placeness, c2r);
+    fftw<Tfloat, complex_t> reference(lengths, batch, input_strides, output_strides, placeness, c2r);
     reference.set_data_to_buffer(data_maker.result());
 
     // if we're starting with unequal data, we're destined for failure

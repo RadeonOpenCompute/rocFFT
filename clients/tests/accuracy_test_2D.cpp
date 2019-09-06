@@ -74,7 +74,7 @@ class accuracy_test_real_2D    : public ::testing::TestWithParam<std::tuple<std:
 //  Complex to complex
 
 // Templated test function for complex to complex:
-template <class T, class fftw_T>
+template <class T>
 void normal_2D_complex_interleaved_to_complex_interleaved(std::vector<size_t>     lengths,
                                                           size_t                  batch,
                                                           rocfft_result_placement placeness,
@@ -105,7 +105,7 @@ void normal_2D_complex_interleaved_to_complex_interleaved(std::vector<size_t>   
     rocfft_array_type in_array_type   = rocfft_array_type_complex_interleaved;
     rocfft_array_type out_array_type  = rocfft_array_type_complex_interleaved;
 
-    complex_to_complex<T, fftw_T>(pattern,
+    complex_to_complex<T>(pattern,
                                   transform_type,
                                   lengths,
                                   batch,
@@ -133,7 +133,7 @@ TEST_P(accuracy_test_complex_2D,
 
     try
     {
-        normal_2D_complex_interleaved_to_complex_interleaved<float, fftwf_complex>(
+        normal_2D_complex_interleaved_to_complex_interleaved<float>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -155,7 +155,7 @@ TEST_P(accuracy_test_complex_2D,
 
     try
     {
-        normal_2D_complex_interleaved_to_complex_interleaved<double, fftw_complex>(
+        normal_2D_complex_interleaved_to_complex_interleaved<double>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -170,7 +170,7 @@ TEST_P(accuracy_test_complex_2D,
 // Real to complex
 
 // Templated test function for real to complex:
-template <class T, class fftw_T>
+template <class T>
 void normal_2D_real_to_complex_interleaved(std::vector<size_t>     lengths,
                                                          size_t                  batch,
                                                          rocfft_result_placement placeness,
@@ -189,7 +189,7 @@ void normal_2D_real_to_complex_interleaved(std::vector<size_t>     lengths,
     rocfft_array_type in_array_type   = rocfft_array_type_real;
     rocfft_array_type out_array_type  = rocfft_array_type_hermitian_interleaved;
 
-    real_to_complex<T, fftw_T>(pattern,
+    real_to_complex<T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -216,7 +216,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_to_complex_interleaved_single_preci
 
     try
     {
-        normal_2D_real_to_complex_interleaved<float, fftwf_complex>(
+        normal_2D_real_to_complex_interleaved<float>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -237,7 +237,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_to_complex_interleaved_double_preci
 
     try
     {
-        normal_2D_real_to_complex_interleaved<double, fftw_complex>(
+        normal_2D_real_to_complex_interleaved<double>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -250,7 +250,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_real_to_complex_interleaved_double_preci
 // Complex to teal
 
 // Templated test function for complex to real:
-template <class T, class fftw_T>
+template <class T>
 void normal_2D_complex_interleaved_to_real(std::vector<size_t>     lengths,
                                              size_t                  batch,
                                              rocfft_result_placement placeness,
@@ -268,7 +268,7 @@ void normal_2D_complex_interleaved_to_real(std::vector<size_t>     lengths,
     rocfft_array_type in_array_type   = rocfft_array_type_hermitian_interleaved;
     rocfft_array_type out_array_type  = rocfft_array_type_real;
 
-    complex_to_real<T, fftw_T>(pattern,
+    complex_to_real<T>(pattern,
                                  transform_type,
                                  lengths,
                                  batch,
@@ -295,7 +295,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_complex_interleaved_to_real_single_preci
 
     try
     {
-        normal_2D_complex_interleaved_to_real<float, fftwf_complex>(
+        normal_2D_complex_interleaved_to_real<float>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
@@ -316,7 +316,7 @@ TEST_P(accuracy_test_real_2D, normal_2D_complex_interleaved_to_real_double_preci
 
     try
     {
-        normal_2D_complex_interleaved_to_real<double, fftw_complex>(
+        normal_2D_complex_interleaved_to_real<double>(
             lengths, batch, placeness, transform_type, stride, pattern);
     }
     catch(const std::exception& err)
