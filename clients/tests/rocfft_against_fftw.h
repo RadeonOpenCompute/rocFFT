@@ -28,24 +28,6 @@
 #include "rocfft_transform.h"
 
 
-// C++ traits to translate float->fftwf_complex and
-// double->fftw_complex.
-// The correct FFTW complex type can be accessed via, for example,
-// using complex_t = typename fftwtrait<Tfloat>::complex_t;
-template <typename Tfloat> struct fftwtrait;
-template <>
-struct fftwtrait<float>
-{
-public:
-    using complex_t = fftwf_complex;
-};
-template <>
-struct fftwtrait<double>
-{
-public:
-    using complex_t = fftw_complex;
-};
-
 // Complex to Complex
 // dimension is inferred from lengths.size()
 // tightly packed is inferred from strides.empty()
@@ -76,7 +58,7 @@ void complex_to_complex(data_pattern            pattern,
                        transform_type,
                        scale);
 
-    fftw<Tfloat, complex_t> reference(lengths, batch, input_strides, output_strides, placeness, c2c);
+    fftw<Tfloat> reference(lengths, batch, input_strides, output_strides, placeness, c2c);
 
     switch(pattern)
     {
@@ -152,7 +134,7 @@ void real_to_complex(data_pattern            pattern,
                        scale);
 
     using complex_t = typename fftwtrait<Tfloat>::complex_t;
-    fftw<Tfloat, complex_t> reference(lengths, batch, input_strides, output_strides, placeness, r2c);
+    fftw<Tfloat> reference(lengths, batch, input_strides, output_strides, placeness, r2c);
 
     switch(pattern)
     {
@@ -204,7 +186,7 @@ void complex_to_real(data_pattern            pattern,
 {
     // will perform a real to complex first
     using complex_t = typename fftwtrait<Tfloat>::complex_t;
-    fftw<Tfloat, complex_t> data_maker(lengths, batch, output_strides, input_strides, placeness, r2c);
+    fftw<Tfloat> data_maker(lengths, batch, output_strides, input_strides, placeness, r2c);
 
     switch(pattern)
     {
@@ -239,7 +221,7 @@ void complex_to_real(data_pattern            pattern,
                        scale);
     test_fft.set_data_to_buffer(data_maker.result());
 
-    fftw<Tfloat, complex_t> reference(lengths, batch, input_strides, output_strides, placeness, c2r);
+    fftw<Tfloat> reference(lengths, batch, input_strides, output_strides, placeness, c2r);
     reference.set_data_to_buffer(data_maker.result());
 
     // if we're starting with unequal data, we're destined for failure
