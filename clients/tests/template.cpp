@@ -67,7 +67,7 @@ template <>
 rocfft_status rocfft_set_scale_template<float>(const rocfft_plan_description description,
                                                const float                   scale)
 {
-    
+
     // TODO: enable this when this is enabled in rocfft.h
     //return rocfft_plan_description_set_scale_float(description, scale);
     return rocfft_status_success;

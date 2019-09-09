@@ -39,12 +39,12 @@ enum fftw_transform_type
     c2r
 };
 
-
 // C++ traits to translate float->fftwf_complex and
 // double->fftw_complex.
 // The correct FFTW complex type can be accessed via, for example,
 // using complex_t = typename fftwtrait<Tfloat>::complex_t;
-template <typename Tfloat> struct fftwtrait;
+template <typename Tfloat>
+struct fftwtrait;
 template <>
 struct fftwtrait<float>
 {
@@ -68,7 +68,7 @@ class fftw_wrapper<float>
 {
 public:
     using complex_t = typename fftwtrait<float>::complex_t;
-    
+
     fftwf_plan plan;
 
     void make_plan(int                       x,
@@ -76,8 +76,8 @@ public:
                    int                       z,
                    int                       num_dimensions,
                    int                       batch_size,
-                   complex_t*            input_ptr,
-                   complex_t*            output_ptr,
+                   complex_t*                input_ptr,
+                   complex_t*                output_ptr,
                    int                       num_points_in_single_batch,
                    const std::vector<size_t> input_strides,
                    const std::vector<size_t> output_strides,
@@ -151,8 +151,8 @@ public:
                  int                       z,
                  int                       num_dimensions,
                  int                       batch_size,
-                 complex_t*            input_ptr,
-                 complex_t*            output_ptr,
+                 complex_t*                input_ptr,
+                 complex_t*                output_ptr,
                  int                       num_points_in_single_batch,
                  const std::vector<size_t> input_strides,
                  const std::vector<size_t> output_strides,
@@ -194,7 +194,7 @@ class fftw_wrapper<double>
 {
 public:
     using complex_t = typename fftwtrait<double>::complex_t;
-    
+
     fftw_plan plan;
 
     void make_plan(int                       x,
@@ -202,8 +202,8 @@ public:
                    int                       z,
                    int                       num_dimensions,
                    int                       batch_size,
-                   complex_t*             input_ptr,
-                   complex_t*             output_ptr,
+                   complex_t*                input_ptr,
+                   complex_t*                output_ptr,
                    int                       num_points_in_single_batch,
                    const std::vector<size_t> input_strides,
                    const std::vector<size_t> output_strides,
@@ -277,8 +277,8 @@ public:
                  int                       z,
                  int                       num_dimensions,
                  int                       batch_size,
-                 complex_t*             input_ptr,
-                 complex_t*             output_ptr,
+                 complex_t*                input_ptr,
+                 complex_t*                output_ptr,
                  int                       num_points_in_single_batch,
                  const std::vector<size_t> input_strides,
                  const std::vector<size_t> output_strides,
@@ -319,7 +319,7 @@ template <typename T>
 class fftw
 {
 private:
-    using complex_t = typename fftwtrait<T>::complex_t;
+    using complex_t                             = typename fftwtrait<T>::complex_t;
     static const size_t tightly_packed_distance = 0;
 
     fftw_direction      _direction;
@@ -332,8 +332,8 @@ private:
     std::vector<size_t> input_strides;
     std::vector<size_t> output_strides;
 
-    buffer<T>               input;
-    buffer<T>               output;
+    buffer<T>       input;
+    buffer<T>       output;
     fftw_wrapper<T> fftw_guts;
 
     T _forward_scale, _backward_scale;

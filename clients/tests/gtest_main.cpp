@@ -22,7 +22,6 @@
 /// @brief googletest based unit tester for rocfft
 ///
 
-
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -121,11 +120,5 @@ int main(int argc, char* argv[])
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    std::cout << "asdf" << std::endl;
-    for(int i = 0; i < argc; ++i) {
-        std::cout << argv[i] << std::endl;
-    }
-    
-    
     return RUN_ALL_TESTS();
 }
