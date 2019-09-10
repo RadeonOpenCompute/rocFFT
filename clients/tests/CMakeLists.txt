@@ -88,6 +88,7 @@ target_include_directories( rocfft-test
     $<BUILD_INTERFACE:${GTEST_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${FFTW_INCLUDES}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/misc/include>
+    ${FFTW_INCLUDE_DIRS}
 )
 
 target_link_libraries( rocfft-test PRIVATE roc::rocfft ${GTEST_LIBRARIES} ${FFTW_LIBRARIES} ${Boost_LIBRARIES} )
@@ -101,17 +102,26 @@ if( CUDA_FOUND )
   target_compile_definitions( rocfft-test PRIVATE __HIP_PLATFORM_NVCC__ )
   target_link_libraries( rocfft-test PRIVATE ${CUDA_LIBRARIES} )
 else( )
-  target_link_libraries( rocfft-test PRIVATE hip::hip_hcc )
+  if( NOT WIN32 )
+    target_link_libraries( rocfft-test PRIVATE hip::hip_hcc )
+  endif( )
 endif( )
 
-if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" )
+if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR HIP_PLATFORM STREQUAL "hip-clang")
   # Remove following when hcc is fixed; hcc emits following spurious warning ROCm v1.6.1
   # "clang-5.0: warning: argument unused during compilation: '-isystem /opt/rocm/include'"
-  target_compile_options( rocfft-test PRIVATE -Wno-unused-command-line-argument -hc)
+  target_compile_options( rocfft-test PRIVATE -Wno-unused-command-line-argument )
 
   # foreach( target ${AMDGPU_TARGETS} )
   #   target_link_libraries( rocfft-test PRIVATE --amdgpu-target=${target} )
   # endforeach( )
+endif( )
+if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" )
+  target_compile_options( rocfft-test PRIVATE -hc)
+endif( )
+if( HIP_PLATFORM STREQUAL "hip-clang" )
+  # Avoid warnings due to __declspec attribute 'dllexport' with clang
+  target_compile_options( rocfft-test PRIVATE "-Wno-ignored-attributes -Wno-deprecated-declarations -Wno-unknown-attributes" )
 endif( )
 
 set( THREADS_PREFER_PTHREAD_FLAG ON )

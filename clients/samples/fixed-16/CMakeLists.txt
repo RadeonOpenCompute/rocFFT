@@ -60,17 +60,26 @@ foreach( sample ${sample_list} )
     target_compile_definitions( ${sample} PRIVATE __HIP_PLATFORM_NVCC__ )
     target_link_libraries( ${sample} PRIVATE ${CUDA_LIBRARIES} )
   else( )
-    target_link_libraries( ${sample} PRIVATE hip::hip_hcc )
+    if( NOT WIN32 )
+      target_link_libraries( ${sample} PRIVATE hip::hip_hcc )
+    endif( )
   endif( )
 
-  if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" )
+  if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR HIP_PLATFORM STREQUAL "hip-clang")
     # Remove following when hcc is fixed; hcc emits following spurious warning ROCm v1.6.1
     # "clang-5.0: warning: argument unused during compilation: '-isystem /opt/rocm/include'"
-    target_compile_options( ${sample} PRIVATE -Wno-unused-command-line-argument -hc)
+    target_compile_options( ${sample} PRIVATE -Wno-unused-command-line-argument )
 
     # foreach( target ${AMDGPU_TARGETS} )
     #   target_link_libraries( ${sample} PRIVATE --amdgpu-target=${target} )
     # endforeach( )
+  endif( )
+  if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" )
+    target_compile_options( ${sample} PRIVATE -hc)
+  endif( )
+  if( HIP_PLATFORM STREQUAL "hip-clang" )
+    # Avoid warnings due to __declspec attribute 'dllexport' with clang
+    target_compile_options( ${sample} PRIVATE "-Wno-ignored-attributes -Wno-deprecated-declarations -Wno-unknown-attributes" )
   endif( )
 
 endforeach( )

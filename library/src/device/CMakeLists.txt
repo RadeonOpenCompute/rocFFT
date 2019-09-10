@@ -77,14 +77,26 @@ set( rocfft_device_source
 
 prepend_path( "../.." rocfft_headers_public relative_rocfft_device_headers_public )
 
-add_library( rocfft-device
-  ${rocfft_device_source}
-  ${relative_rocfft_device_headers_public}
-  ${gen_headers}
-  )
+if( WIN32 )
+  add_library( rocfft-device STATIC
+    ${rocfft_device_source}
+    ${relative_rocfft_device_headers_public}
+    ${gen_headers}
+    )
+else( )
+  add_library( rocfft-device
+    ${rocfft_device_source}
+    ${relative_rocfft_device_headers_public}
+    ${gen_headers}
+    )
+endif( )
 add_library( roc::rocfft-device ALIAS rocfft-device )
 target_compile_features( rocfft-device PRIVATE cxx_static_assert cxx_nullptr cxx_auto_type )
 target_compile_options (rocfft-device PRIVATE -fno-gpu-rdc)
+if( HIP_PLATFORM STREQUAL "hip-clang" )
+  # Avoid warnings due to __declspec attribute 'dllexport' with clang
+  target_compile_options( rocfft-device PRIVATE "-Wno-ignored-attributes -Wno-deprecated-declarations -Wno-unknown-attributes" )
+endif( )
 
 # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
 if(TARGET hip::device)

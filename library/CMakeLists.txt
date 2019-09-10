@@ -32,7 +32,7 @@
 function( target_compile_features target_name )
   # With Cmake v3.5, hipcc (with nvcc backend) does not work with target_compile_features
   # Turn on -std=c++11 manually
-  if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
+  if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc*" )
     set_target_properties( ${target_name} PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON )
   else( )
     _target_compile_features( ${target_name} ${ARGN} )
@@ -45,7 +45,7 @@ endfunction( )
 function( target_link_libraries target_name )
   # hipcc takes care of finding hip library dependencies internally; remove
   # explicit mentions of them so cmake doesn't complain on nvcc path
-  if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" AND NOT USE_HIP_CLANG)
+  if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc*" AND NOT USE_HIP_CLANG)
     foreach( link_library ${ARGN} )
       if( (link_library MATCHES "^hip::|^hcc::") )
       else( )
@@ -136,8 +136,10 @@ add_subdirectory( src )
 # endif( )
 
 # Package specific CPACK vars
-set( CPACK_DEBIAN_PACKAGE_DEPENDS "hip_hcc (>= 1.3)" )
-set( CPACK_RPM_PACKAGE_REQUIRES "hip_hcc >= 1.3" )
+if( NOT WIN32 )
+  set( CPACK_DEBIAN_PACKAGE_DEPENDS "hip_hcc (>= 1.3)" )
+  set( CPACK_RPM_PACKAGE_REQUIRES "hip_hcc >= 1.3" )
+endif( )
 set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.md" )
 
 if( NOT CPACK_PACKAGING_INSTALL_PREFIX )

@@ -20,10 +20,11 @@
 * THE SOFTWARE.
 *******************************************************************************/
 
+#include <chrono>
 #include <gtest/gtest.h>
 #include <math.h>
 #include <stdexcept>
-#include <unistd.h>
+#include <thread>
 #include <vector>
 
 #include "fftw_transform.h"
@@ -169,7 +170,7 @@ void normal_1D_complex_interleaved_to_complex_interleaved(size_t                
                                   in_array_type,
                                   out_array_type,
                                   placeness);
-    usleep(1e4);
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 }
 
 // *****************************************************
@@ -250,7 +251,7 @@ void normal_1D_real_interleaved_to_hermitian_interleaved(size_t                 
                                  out_array_type,
                                  rocfft_placement_notinplace); // must be non-inplace tranform
 
-    usleep(1e4);
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 }
 
 TEST_P(accuracy_test_real, normal_1D_real_interleaved_to_hermitian_interleaved_single_precision)
@@ -329,7 +330,7 @@ void normal_1D_hermitian_interleaved_to_real_interleaved(size_t                 
                                  out_array_type,
                                  rocfft_placement_notinplace); // must be non-inplace tranform
 
-    usleep(1e4);
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 }
 
 TEST_P(accuracy_test_real, normal_1D_hermitian_interleaved_to_real_interleaved_single_precision)

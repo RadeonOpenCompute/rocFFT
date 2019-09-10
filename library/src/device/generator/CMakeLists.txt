@@ -8,6 +8,11 @@ target_compile_features( rocfft-kernel-generator PRIVATE cxx_static_assert cxx_n
 set_target_properties( rocfft-kernel-generator PROPERTIES CXX_EXTENSIONS NO )
 set_target_properties( rocfft-kernel-generator PROPERTIES DEBUG_POSTFIX "-d" )
 
+if( HIP_PLATFORM STREQUAL "hip-clang" )
+  # Avoid warnings due to __declspec attribute 'dllexport' with clang
+  target_compile_options( rocfft-kernel-generator PRIVATE "-Wno-ignored-attributes -Wno-deprecated-declarations -Wno-unknown-attributes" )
+endif( )
+
 target_include_directories( rocfft-kernel-generator
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>

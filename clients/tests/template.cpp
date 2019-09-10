@@ -4,7 +4,6 @@
 
 #include <gtest/gtest.h>
 #include <stdexcept>
-#include <unistd.h>
 
 #include "rocfft_transform.h"
 

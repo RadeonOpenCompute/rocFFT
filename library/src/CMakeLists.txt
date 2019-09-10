@@ -95,6 +95,10 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR HIP_PLATFORM STREQUAL "hip-clang")
 else( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
   cuda_find_samples_inc_dir( cuda_samples_inc_dir )
 endif( )
+if( HIP_PLATFORM STREQUAL "hip-clang" )
+  # Avoid warnings due to __declspec attribute 'dllexport' with clang
+  target_compile_options( rocfft PRIVATE "-Wno-ignored-attributes -Wno-deprecated-declarations -Wno-unknown-attributes" )
+endif( )
 
 target_include_directories( rocfft
   PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/src/include>
@@ -117,6 +121,16 @@ generate_export_header( rocfft EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/ro
 # Following Boost conventions of prefixing 'lib' on static built libraries, across all platforms
 if( NOT BUILD_SHARED_LIBS )
   set_target_properties( rocfft PROPERTIES PREFIX "lib" )
+endif( )
+
+# This is needed on Windows only
+if( WIN32 )
+  add_custom_command(TARGET rocfft
+                     POST_BUILD
+                     COMMAND ${CMAKE_COMMAND} -E copy
+		     ${PROJECT_BINARY_DIR}/staging/rocfft.lib
+		     ${PROJECT_BINARY_DIR}/library/src/rocfft.lib
+  )
 endif( )
 
 ############################################################
