@@ -11,7 +11,7 @@ file( WRITE ${scripts_write_dir}/postinst
 set -e
 
 do_ldconfig() {
-  echo ${CPACK_PACKAGING_INSTALL_PREFIX}/${LIB_INSTALL_DIR} > ${ld_conf_file} && ldconfig
+  echo /opt/rocm/${LIB_INSTALL_DIR} > ${ld_conf_file} && ldconfig
 }
 
 do_softlinks() {

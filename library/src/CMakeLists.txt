@@ -74,6 +74,12 @@ prepend_path( ".." rocfft_headers_public relative_rocfft_headers_public )
 
 add_library( rocfft ${rocfft_source} ${relative_rocfft_headers_public} )
 add_library( roc::rocfft ALIAS rocfft )
+
+# RUNPATH is set only when ROCM_RPATH is defined in the ENV
+if( DEFINED ENV{ROCM_RPATH} )
+  set ( CMAKE_SHARED_LINKER_FLAGS " -Wl,--enable-new-dtags -Wl,--rpath,$ENV{ROCM_RPATH}" )
+endif( )
+
 target_compile_features( rocfft PRIVATE cxx_static_assert cxx_nullptr cxx_auto_type )
 
 # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
@@ -86,7 +92,7 @@ target_link_libraries( rocfft PRIVATE rocfft-device )
 
 if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR HIP_PLATFORM STREQUAL "hip-clang")
   # Remove following when hcc is fixed; hcc emits following spurious warning ROCm v1.6.1
-  # "clang-5.0: warning: argument unused during compilation: '-isystem /opt/rocm/include'"
+  # "clang-5.0: warning: argument unused during compilation: '-isystem ${CMAKE_INSTALL_PREFIX}/include'"
   target_compile_options( rocfft PRIVATE -Wno-unused-command-line-argument )
 
   foreach( target ${AMDGPU_TARGETS} )

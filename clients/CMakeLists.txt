@@ -51,11 +51,11 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 # if rocfft is not a target, then we know clients are built separately from the library and we must search
 # for the rocfft package
 if( NOT TARGET rocfft )
-  find_package( rocfft REQUIRED CONFIG PATHS /opt/rocm/rocfft )
+  find_package( rocfft REQUIRED CONFIG PATHS ${CMAKE_INSTALL_PREFIX}/rocfft )
 endif( )
 
 # Hip headers required of all clients; clients use hip to allocate device memory
-find_package( hip REQUIRED CONFIG PATHS /opt/rocm )
+find_package( hip REQUIRED CONFIG PATHS ${CMAKE_INSTALL_PREFIX} )
 
 # Quietly look for CUDA, but if not found it's not an error
 # The presense of hip is not sufficient to determine if we want a rocm or cuda backend
@@ -101,12 +101,12 @@ function(rocm_create_package_clients)
     if(EXISTS "${PROJECT_BINARY_DIR}/package")
         file(REMOVE_RECURSE "${PROJECT_BINARY_DIR}/package")
     endif()
-    file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/package/opt/rocm/${PARSE_LIB_NAME}/clients")
+    file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/package/${CMAKE_INSTALL_PREFIX}/${PARSE_LIB_NAME}/clients")
     file(WRITE "${PROJECT_BINARY_DIR}/package/DEBIAN/control" ${DEB_CONTROL_FILE_CONTENT})
 
     add_custom_target(package_clients
-        COMMAND ${CMAKE_COMMAND} -E remove -f "${PROJECT_BINARY_DIR}/package/opt/rocm/${PARSE_LIB_NAME}/clients/*"
-        COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_BINARY_DIR}/staging/*" "${PROJECT_BINARY_DIR}/package/opt/rocm/${PARSE_LIB_NAME}/clients"
+        COMMAND ${CMAKE_COMMAND} -E remove -f "${PROJECT_BINARY_DIR}/package/${CMAKE_INSTALL_PREFIX}/${PARSE_LIB_NAME}/clients/*"
+        COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_BINARY_DIR}/staging/*" "${PROJECT_BINARY_DIR}/package/${CMAKE_INSTALL_PREFIX}/${PARSE_LIB_NAME}/clients"
         COMMAND dpkg -b "${PROJECT_BINARY_DIR}/package/"  ${PACKAGE_NAME})
 endfunction(rocm_create_package_clients)
 

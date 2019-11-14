@@ -269,6 +269,10 @@ build_clients=false
 build_cuda=false
 build_release=true
 
+if ! [ -z ${ROCM_PATH+x} ]; then
+    install_prefix=${ROCM_PATH}
+fi
+
 # #################################################
 # Parameter parsing
 # #################################################
@@ -368,6 +372,9 @@ fi
 # We append customary rocm path; if user provides custom rocm path in ${path}, our
 # hard-coded path has lesser priority
 export PATH=${PATH}:/opt/rocm/bin
+if ! [ -z ${ROCM_PATH+x} ]; then
+    export PATH=${PATH}:${ROCM_PATH}/bin
+fi
 
 pushd .
 # #################################################
@@ -404,9 +411,9 @@ if [[ "${build_cuda}" == false ]]; then
 
     # Build library with AMD toolchain because of existense of device kernels
     if [[ "${build_clients}" == true ]]; then
-        CXX=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=/opt/rocm ../..
+        CXX=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${install_prefix} ../..
     else
-        CXX=${compiler} ${cmake_executable} ${cmake_common_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=/opt/rocm ../..
+        CXX=${compiler} ${cmake_executable} ${cmake_common_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${install_prefix} ../..
     fi
     check_exit_code
     make -j$(nproc)
@@ -433,7 +440,7 @@ else
     # with a different compiler on each.
 
     # Build library only with hipcc as compiler
-    CXX=${compiler} ${cmake_executable} ${cmake_common_options} -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGE_INSTALL_DIRECTORY=/opt/rocm ../..
+    CXX=${compiler} ${cmake_executable} ${cmake_common_options} -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGE_INSTALL_DIRECTORY=${install_prefix} ../..
     check_exit_code
     make -j$(nproc)
     check_exit_code
