@@ -96,6 +96,9 @@ elseif( CMAKE_CXX_COMPILER MATCHES ".*/hcc$" )
   message( STATUS "HCC compiler set; ROCm backend selected [ CXX=/opt/rocm/bin/hcc cmake ... ]" )
 endif( )
 
+# NOTE:  workaround until hcc & hip cmake modules fixes symlink logic in their config files; remove when fixed
+list( APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hcc /opt/rocm/hip )
+
 # This finds the rocm-cmake project, and installs it if not found
 # rocm-cmake contains common cmake code for rocm projects to help setup and install
 set( PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern )
@@ -124,9 +127,6 @@ rocm_setup_version( VERSION ${VERSION_STRING} )
 # Append our library helper cmake path and the cmake path for hip (for convenience)
 # Users may override HIP path by specifying their own in CMAKE_MODULE_PATH
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
-
-# NOTE:  workaround until hcc & hip cmake modules fixes symlink logic in their config files; remove when fixed
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/hcc /opt/rocm/hip )
 
 # Enable verbose output
 option( BUILD_VERBOSE "Output additional build information" OFF )
