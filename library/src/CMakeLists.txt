@@ -111,7 +111,7 @@ endif( )
 # Installation
 
 rocm_install_targets(
-  TARGETS ${package_targets} 
+  TARGETS ${package_targets}
   INCLUDE
   ${CMAKE_SOURCE_DIR}/library/include
   ${CMAKE_BINARY_DIR}/include
