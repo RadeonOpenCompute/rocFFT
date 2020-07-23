@@ -22,7 +22,7 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
-find_package(hip)
+find_package(HIP)
 
 if( NOT TARGET rocfft )
   find_package(rocfft)

@@ -115,12 +115,12 @@ set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL
 # Find HCC/HIP dependencies
 if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$|.*/hipcc$" )
   message( STATUS "Building with ROCm tools" )
-  find_package( hip REQUIRED CONFIG PATHS )
+  find_package( HIP REQUIRED CONFIG PATHS )
 endif( )
 
 # Hip headers required of all clients; clients use hip to allocate
 # device memory
-find_package( hip REQUIRED CONFIG PATHS )
+find_package( HIP REQUIRED CONFIG PATHS )
 
 # CMake list of machine targets
 set( AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908 CACHE STRING
