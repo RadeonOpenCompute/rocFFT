@@ -277,6 +277,91 @@ template <typename T,
           int    TWL,
           int    DIR,
           bool   ALL>
+__device__ void transpose_tile_device_2(const T_I*   input,
+                                      T_O*         output,
+                                      size_t       in_offset,
+                                      size_t       out_offset,
+                                      const size_t m,
+                                      const size_t n,
+                                      size_t       gx,
+                                      size_t       gy,
+                                      size_t       ld_in,
+                                      size_t       ld_out,
+                                      T*           twiddles_large,
+                                      size_t       stride_in_0,
+                                      size_t       stride_out_0)
+{
+    __shared__ T shared_A[DIM_X][DIM_X];
+
+    size_t tid = hipThreadIdx_x + hipThreadIdx_y * hipBlockDim_x;
+    size_t tx1 = tid % DIM_X;
+    size_t ty1 = tid / DIM_X;
+
+    if(ALL)
+    {
+#pragma unroll
+        for(int i = 0; i < DIM_X; i += DIM_Y)
+        {
+            //T tmp = input[tx1 + (ty1 + i) * ld_in];
+            // T tmp = Handler<T_I>::read(input, in_offset + tx1 + (ty1 + i) * ld_in);
+            T tmp = Handler<T_I>::read(input, in_offset + tx1*stride_in_0 + (ty1 + i) * ld_in);
+            TRANSPOSE_TWIDDLE_MUL();
+        }
+
+        __syncthreads();
+
+#pragma unroll
+        for(int i = 0; i < DIM_X; i += DIM_Y)
+        {
+            // reconfigure the threads
+            //output[tx1 + (i + ty1) * ld_out] = shared_A[ty1 + i][tx1];
+            Handler<T_O>::write(
+                // output, out_offset + tx1 + (i + ty1) * ld_out, shared_A[ty1 + i][tx1]);
+                output, out_offset + tx1*stride_out_0 + (i + ty1) * ld_out, shared_A[ty1 + i][tx1]);
+        }
+    }
+    else
+    {
+        for(size_t i = 0; i < m; i += DIM_Y)
+        {
+            if(tx1 < n && (ty1 + i) < m)
+            {
+                //T tmp = input[tx1 + (ty1 + i) * ld_in];
+                // T tmp = Handler<T_I>::read(input, in_offset + tx1 + (ty1 + i) * ld_in);
+                T tmp = Handler<T_I>::read(input, in_offset + tx1*stride_in_0 + (ty1 + i) * ld_in);
+                TRANSPOSE_TWIDDLE_MUL();
+            }
+        }
+
+        __syncthreads();
+
+        for(size_t i = 0; i < n; i += DIM_Y)
+        {
+            // reconfigure the threads
+            if(tx1 < m && (ty1 + i) < n)
+            {
+                //output[tx1 + (i + ty1) * ld_out] = shared_A[ty1 + i][tx1];
+                Handler<T_O>::write(
+                    // output, out_offset + tx1 + (i + ty1) * ld_out, shared_A[ty1 + i][tx1]);
+                    output, out_offset + tx1*stride_out_0 + (i + ty1) * ld_out, shared_A[ty1 + i][tx1]);
+            }
+        }
+    }
+}									  
+
+// - transpose input of size m * n to output of size n * m
+//   input, output are in device memory
+// - 2D grid and 2D thread block (DIM_X, DIM_Y)
+// - Assume DIM_X by DIM_Y threads are transposing a tile DIM_X * DIM_X
+template <typename T,
+          typename T_I,
+          typename T_O,
+          size_t DIM_X,
+          size_t DIM_Y,
+          bool   WITH_TWL,
+          int    TWL,
+          int    DIR,
+          bool   ALL>
 __global__ void transpose_kernel2(const T_I* input,
                                   T_O*       output,
                                   T*         twiddles_large,
@@ -287,6 +372,9 @@ __global__ void transpose_kernel2(const T_I* input,
 {
     size_t ld_in  = stride_in[1];
     size_t ld_out = stride_out[1];
+
+	size_t stride_in_0  = stride_in[0];
+	size_t stride_out_0 = stride_out[0];
 
     size_t iOffset = 0;
     size_t oOffset = 0;
@@ -310,11 +398,14 @@ __global__ void transpose_kernel2(const T_I* input,
 
     //input += hipBlockIdx_x * DIM_X + hipBlockIdx_y * DIM_X * ld_in + iOffset;
     //output += hipBlockIdx_x * DIM_X * ld_out + hipBlockIdx_y * DIM_X + oOffset;
-    iOffset += hipBlockIdx_x * DIM_X + hipBlockIdx_y * DIM_X * ld_in;
-    oOffset += hipBlockIdx_x * DIM_X * ld_out + hipBlockIdx_y * DIM_X;
+    // iOffset += hipBlockIdx_x * DIM_X + hipBlockIdx_y * DIM_X * ld_in;
+    // oOffset += hipBlockIdx_x * DIM_X * ld_out + hipBlockIdx_y * DIM_X;
+	iOffset += hipBlockIdx_x * DIM_X * stride_in_0 + hipBlockIdx_y * DIM_X * ld_in;
+	oOffset += hipBlockIdx_x * DIM_X * ld_out + hipBlockIdx_y * DIM_X * stride_out_0;
 
     if(ALL)
     {
+    /*
         transpose_tile_device<T, T_I, T_O, DIM_X, DIM_Y, WITH_TWL, TWL, DIR, ALL>(
             input,
             output,
@@ -327,6 +418,22 @@ __global__ void transpose_kernel2(const T_I* input,
             ld_in,
             ld_out,
             twiddles_large);
+    */
+		transpose_tile_device_2<T, T_I, T_O, DIM_X, DIM_Y, WITH_TWL, TWL, DIR, ALL>(
+            input,
+            output,
+            iOffset,
+            oOffset,
+            DIM_X,
+            DIM_X,
+            hipBlockIdx_x * DIM_X,
+            hipBlockIdx_y * DIM_X,
+            ld_in,
+            ld_out,
+            twiddles_large,
+            stride_in_0,
+            stride_out_0);
+		
     }
     else
     {
@@ -334,6 +441,7 @@ __global__ void transpose_kernel2(const T_I* input,
         size_t n  = lengths[0];
         size_t mm = min(m - hipBlockIdx_y * DIM_X, DIM_X); // the corner case along m
         size_t nn = min(n - hipBlockIdx_x * DIM_X, DIM_X); // the corner case along n
+        /*
         transpose_tile_device<T, T_I, T_O, DIM_X, DIM_Y, WITH_TWL, TWL, DIR, ALL>(
             input,
             output,
@@ -346,6 +454,22 @@ __global__ void transpose_kernel2(const T_I* input,
             ld_in,
             ld_out,
             twiddles_large);
+       */
+		transpose_tile_device_2<T, T_I, T_O, DIM_X, DIM_Y, WITH_TWL, TWL, DIR, ALL>(
+            input,
+            output,
+            iOffset,
+            oOffset,
+            mm,
+            nn,
+            hipBlockIdx_x * DIM_X,
+            hipBlockIdx_y * DIM_X,
+            ld_in,
+            ld_out,
+            twiddles_large,
+            stride_in_0,
+            stride_out_0);
+		
     }
 }
 
