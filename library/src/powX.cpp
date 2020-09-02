@@ -148,6 +148,16 @@ bool PlanPowX(ExecPlan& execPlan)
             {
                 gp.b_x *= execPlan.execSeq[i]->length[2];
             }
+			if(execPlan.execSeq[i]->length.size() == 4)
+            {
+                gp.b_x *= execPlan.execSeq[i]->length[3] * execPlan.execSeq[i]->length[2] ;
+            }
+			if(execPlan.execSeq[i]->length.size() > 4)
+            {
+            	for(size_t j = 2; j < execPlan.execSeq[i]->length.size(); j++)
+                	gp.b_x *= execPlan.execSeq[i]->length[j] ;
+            }
+			
             gp.tpb_x = wgs;
             break;
         case CS_KERNEL_STOCKHAM_BLOCK_RC:
@@ -161,6 +171,15 @@ bool PlanPowX(ExecPlan& execPlan)
             if(execPlan.execSeq[i]->length.size() == 3)
             {
                 gp.b_x *= execPlan.execSeq[i]->length[2];
+            }
+			if(execPlan.execSeq[i]->length.size() == 4)
+            {
+                gp.b_x *= execPlan.execSeq[i]->length[3] * execPlan.execSeq[i]->length[2] ;
+            }
+			if(execPlan.execSeq[i]->length.size() > 4)
+            {
+            	for(size_t j = 2; j < execPlan.execSeq[i]->length.size(); j++)
+                	gp.b_x *= execPlan.execSeq[i]->length[j] ;
             }
             gp.tpb_x = wgs;
             break;

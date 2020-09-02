@@ -2584,6 +2584,11 @@ void TreeNode::assign_buffers_CS_L1D_TRTRT(TraverseState&   state,
 
         size_t cs            = childNodes[1]->childNodes.size();
         childNodes[1]->obOut = childNodes[1]->childNodes[cs - 1]->obOut;
+
+		if(flipIn != obOutBuf)
+        {
+            std::swap(flipIn, flipOut);
+        }
     }
     else
     {
@@ -2904,6 +2909,9 @@ void TreeNode::TraverseTreeAssignPlacementsLogicA(const rocfft_array_type rootIn
                 break;
             case OB_TEMP:
                 inArrayType = rocfft_array_type_complex_interleaved;
+				if( childNodes.size()!=0 && parent->obIn==OB_TEMP_BLUESTEIN){
+					iOffset = parent->iOffset;
+				}
                 break;
             case OB_TEMP_CMPLX_FOR_REAL:
                 inArrayType = rocfft_array_type_complex_interleaved;
@@ -2936,6 +2944,9 @@ void TreeNode::TraverseTreeAssignPlacementsLogicA(const rocfft_array_type rootIn
                 break;
             case OB_TEMP:
                 outArrayType = rocfft_array_type_complex_interleaved;
+				if( childNodes.size()!=0 && parent->obOut==OB_TEMP_BLUESTEIN){
+					oOffset = parent->oOffset;
+				}
                 break;
             case OB_TEMP_CMPLX_FOR_REAL:
                 outArrayType = rocfft_array_type_complex_interleaved;
@@ -3487,7 +3498,8 @@ void TreeNode::assign_params_CS_L1D_TRTRT()
     auto& trans3Plan = childNodes[4];
 
     trans1Plan->inStride.push_back(inStride[0]);
-    trans1Plan->inStride.push_back(trans1Plan->length[0]);
+    // trans1Plan->inStride.push_back(trans1Plan->length[0]);
+    trans1Plan->inStride.push_back(inStride[0] * trans1Plan->length[0]);
     trans1Plan->iDist = iDist;
     for(size_t index = 1; index < length.size(); index++)
         trans1Plan->inStride.push_back(inStride[index]);
