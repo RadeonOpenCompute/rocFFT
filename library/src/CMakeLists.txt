@@ -114,7 +114,7 @@ endif( )
 # Installation
 
 rocm_install_targets(
-  TARGETS ${package_targets} 
+  TARGETS ${package_targets}
   INCLUDE
   ${CMAKE_SOURCE_DIR}/library/include
   ${CMAKE_BINARY_DIR}/include
@@ -125,7 +125,7 @@ rocm_install_targets(
 rocm_export_targets(
   TARGETS roc::rocfft
   PREFIX rocfft
-  DEPENDS PACKAGE hip
+  DEPENDS PACKAGE HIP
   NAMESPACE roc::
   )
 

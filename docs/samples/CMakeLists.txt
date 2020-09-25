@@ -25,7 +25,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 # project name
 PROJECT(rocfft_samples CXX)
 
-find_package(hip)
+find_package(HIP)
 find_package(rocfft)
 
 set (samples complex_1d complex_2d complex_3d real2complex_1d real2complex_2d real2complex_3d)
@@ -40,7 +40,7 @@ foreach( exe ${samples} )
   target_include_directories( ${exe} PRIVATE ${rocfft_INCLUDE_DIR} )
   set_target_properties( ${exe} PROPERTIES CXX_STANDARD_REQUIRED ON)
   set_target_properties( ${exe} PROPERTIES CXX_STANDARD 14)
-  
+
   # prevent issue where __float128 is not supported
   set_target_properties( ${exe} PROPERTIES CXX_EXTENSIONS OFF)
 endforeach()

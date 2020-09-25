@@ -69,8 +69,8 @@ endif( )
 # device memory.
 # NB: 2020-04-17: Using hip-clang compiled from source requires that
 # this not be added twice.
-if( NOT hip_FOUND)
-  find_package( hip REQUIRED CONFIG PATHS )
+if( NOT HIP_FOUND)
+  find_package( HIP REQUIRED CONFIG PATHS )
 endif()
 
 if( BUILD_CLIENTS_SAMPLES )

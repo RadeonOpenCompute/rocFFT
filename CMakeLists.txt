@@ -123,12 +123,12 @@ set( AMDGPU_TARGETS_SRAM_ECC gfx906;gfx908 )
 # Find HCC/HIP dependencies
 if( CMAKE_CXX_COMPILER MATCHES ".*/hcc$|.*/hipcc$" )
   message( STATUS "Building with ROCm tools" )
-  find_package( hip REQUIRED CONFIG PATHS )
+  find_package( HIP REQUIRED CONFIG PATHS )
 endif( )
 
 # Hip headers required of all clients; clients use hip to allocate
 # device memory
-find_package( hip REQUIRED CONFIG PATHS )
+find_package( HIP REQUIRED CONFIG PATHS )
 
 add_subdirectory( library )
 
