@@ -6,7 +6,8 @@ Full documentation for rocFFT is available at [rocfft.readthedocs.io](https://ro
 
 ### Added
 - Explicitly specify MAX_THREADS_PER_BLOCK through _\_launch\_bounds\_ for all
-  manual kernels.
+  kernels.
+- Switch to new syntax for specifying AMD GPU architecture names and features.
 
 ### Optimizations
 - Optimized C2C/R2C 3D 64, 81, 100, 128, 200, 256 cube sizes.
@@ -18,15 +19,6 @@ Full documentation for rocFFT is available at [rocfft.readthedocs.io](https://ro
 ### Changed
 - rocFFT now automatically allocates a work buffer if the plan
   requires one but none is provided.
-
-## [rocFFT 1.0.9 for ROCm 4.0.0]
-
-### Added
-- Explicitly specify MAX_THREADS_PER_BLOCK through _\_launch\_bounds\_ for all
-  generated kernels.
-- Switch to new syntax for specifying AMD GPU architecture names and features.
-
-### Changed
 - An explicit `rocfft_status_invalid_work_buffer` error is now
   returned when a work buffer of insufficient size is provided.
 - Updated online documentation.
