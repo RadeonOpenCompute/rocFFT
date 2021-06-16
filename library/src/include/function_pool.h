@@ -25,7 +25,11 @@
 
 #include "../device/kernels/common.h"
 #include "tree_node.h"
+#include <algorithm>
+#include <array>
+#include <utility>
 #include <unordered_map>
+#include <vector>
 
 using FMKey
     = std::tuple<std::array<size_t, 2>, rocfft_precision, ComputeScheme, SBRC_TRANSPOSE_TYPE>;
