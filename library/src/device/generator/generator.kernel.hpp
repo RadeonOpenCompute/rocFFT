@@ -1158,7 +1158,7 @@ namespace StockhamGenerator
             // Function signature
             if(NeedsLargeTwiddles())
             {
-                str += "template <typename T, StrideBin sb, bool TwdLarge, CallbackType cbtype, "
+                str += "template <typename T, StrideBin sb, CallbackType cbtype, bool TwdLarge, "
                        "size_t LTBase="
                        + std::to_string(LTWD_BASE_DEFAULT) + ">\n";
             }

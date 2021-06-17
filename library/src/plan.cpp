@@ -1007,21 +1007,41 @@ bool TreeNode::use_CS_2D_SINGLE()
 
 bool TreeNode::use_CS_2D_RC()
 {
-    //   For CS_2D_RC, we are reusing SBCC kernel for 1D middle size. The
-    //   current implementation of 1D SBCC supports only 64, 128, and 256.
-    //   However, technically no LDS limitation along the fast dimension
-    //   on upper bound for 2D SBCC cases, and even should not limit to pow
-    //   of 2.
-
-    // FIXME: use all SBCC kernels instead after we fix the bugs in buffer assignment
-    // std::set<int> sbcc_support = {50, 64, 81, 100, 128, 200, 256};
-    std::set<int> sbcc_support = {64, 128, 256};
-    if((sbcc_support.find(length[1]) != sbcc_support.end()) && (length[0] >= 64))
+    try
     {
-        return true;
+        // find the sbcc kernel (throws if not found / or old-sbcc without factors / or new-sbcc with factor)
+        bool oldKernel
+            = function_pool::get_kernel(fpkey(length[1], precision, CS_KERNEL_STOCKHAM_BLOCK_CC))
+                  .factors.empty();
+        if(oldKernel)
+        {
+            // old-sbcc:
+            //   we are reusing SBCC kernel for 1D middle size. The
+            //   current implementation of 1D SBCC supports only 64, 128, and 256.
+            //   However, technically no LDS limitation along the fast dimension
+            //   on upper bound for 2D SBCC cases, and even should not limit to pow
+            //   of 2.
+            if(IsPo2(length[1]) && (length[0] >= 64))
+            {
+                size_t bwd, wgs, lds;
+                GetBlockComputeTable(length[1], bwd, wgs, lds);
+                // need tile-aligned
+                return (length[0] % bwd == 0);
+            }
+            return false;
+        }
+        else
+        {
+            // new-sbcc supports non-tile-aligned, only check if exceeds the min threshold.
+            // only 64,128,256 are available due to some buffer assign bug
+            return (IsPo2(length[1]) && length[0] >= 64);
+        }
     }
-
-    return false;
+    catch(...)
+    {
+        // get_kernel throws, sbcc kernel not found in pool
+        return false;
+    }
 }
 
 size_t TreeNode::count_3D_SBRC_nodes()
