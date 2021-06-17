@@ -186,3 +186,5 @@ if( BUILD_CLIENTS_SAMPLES
   add_subdirectory( clients )
 endif( )
 
+message("HELLO")
+
